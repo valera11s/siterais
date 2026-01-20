@@ -20,7 +20,7 @@ export default function Shop() {
   const [selectedSubcategory, setSelectedSubcategory] = useState([]);
   const [selectedSubSubcategory, setSelectedSubSubcategory] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState([]);
-  const [selectedCondition, setSelectedCondition] = useState('all');
+  // Убрали фильтр по состоянию - всегда только новые товары
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -122,7 +122,6 @@ export default function Shop() {
               setSelectedSubcategory(Array.isArray(filters.subcategory) ? filters.subcategory : (filters.subcategory === 'all' ? [] : (filters.subcategory ? [filters.subcategory] : [])));
               setSelectedSubSubcategory(Array.isArray(filters.subSubcategory) ? filters.subSubcategory : (filters.subSubcategory === 'all' ? [] : (filters.subSubcategory ? [filters.subSubcategory] : [])));
               setSelectedBrand(Array.isArray(filters.brand) ? filters.brand : (filters.brand === 'all' ? [] : (filters.brand ? [filters.brand] : [])));
-              setSelectedCondition(filters.condition || 'all');
               setPriceMin(filters.priceMin || '');
               setPriceMax(filters.priceMax || '');
               setSearchQuery(filters.searchQuery || '');
@@ -177,7 +176,6 @@ export default function Shop() {
                     }
                     setSelectedSubSubcategory([]);
                     setSelectedBrand([]);
-                    setSelectedCondition('all');
                     setPriceMin('');
                     setPriceMax('');
                     setSearchQuery('');
@@ -311,7 +309,6 @@ export default function Shop() {
           subcategory: selectedSubcategory,
           subSubcategory: selectedSubSubcategory,
           brand: selectedBrand,
-          condition: selectedCondition,
           priceMin,
           priceMax,
           searchQuery,
@@ -329,7 +326,7 @@ export default function Shop() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, selectedCondition, priceMin, priceMax, searchQuery]);
+  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, priceMin, priceMax, searchQuery]);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
@@ -486,7 +483,8 @@ export default function Shop() {
       }
       return true;
     })
-    .filter(p => selectedCondition === 'all' || p.condition === selectedCondition || (!p.condition && selectedCondition === 'new'))
+    // Убрали фильтр по состоянию - всегда только новые товары
+    .filter(p => !p.condition || p.condition === 'new')
     .filter(p => !priceMin || p.price >= Number(priceMin))
     .filter(p => !priceMax || p.price <= Number(priceMax))
     .filter(p => {
@@ -572,7 +570,7 @@ export default function Shop() {
         return prev;
       });
     }
-  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, selectedCondition, priceMin, priceMax, searchQuery, sortBy]);
+  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, priceMin, priceMax, searchQuery, sortBy]);
 
   // Скролл наверх при смене страницы
   useEffect(() => {
@@ -586,7 +584,6 @@ export default function Shop() {
     setSelectedSubcategory([]);
     setSelectedSubSubcategory([]);
     setSelectedBrand([]);
-    setSelectedCondition('all');
     setPriceMin('');
     setPriceMax('');
     setSearchQuery('');
@@ -681,8 +678,6 @@ export default function Shop() {
                     }}
                     selectedSubSubcategory={selectedSubSubcategory}
                     setSelectedSubSubcategory={setSelectedSubSubcategory}
-                    selectedCondition={selectedCondition}
-                    setSelectedCondition={setSelectedCondition}
                     priceMin={priceMin}
                     setPriceMin={setPriceMin}
                     priceMax={priceMax}

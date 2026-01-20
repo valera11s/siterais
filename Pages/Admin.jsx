@@ -220,6 +220,126 @@ function AdminPanel({ onLogout }) {
   );
 }
 
+// Компонент inline редактирования цены
+function InlinePriceEditor({ product, onSave }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(product.price?.toString() || '');
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const queryClient = useQueryClient();
+
+  const handleSave = async () => {
+    const newPrice = parseFloat(value);
+    if (isNaN(newPrice) || newPrice < 0) {
+      setValue(product.price?.toString() || '');
+      setIsEditing(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/products/${product.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...product, price: newPrice }),
+      });
+      if (!response.ok) throw new Error('Ошибка обновления');
+      queryClient.invalidateQueries(['admin-products']);
+      setIsEditing(false);
+      toast.success('Цена обновлена');
+    } catch (error) {
+      toast.error('Ошибка обновления цены');
+      setValue(product.price?.toString() || '');
+      setIsEditing(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setValue(product.price?.toString() || '');
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        className="w-24 px-2 py-1 border border-slate-300 rounded text-sm"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => setIsEditing(true)}
+      className="cursor-pointer hover:bg-slate-100 px-2 py-1 rounded transition-colors"
+      title="Нажмите для редактирования"
+    >
+      {product.price?.toLocaleString('ru-RU')} ₽
+    </span>
+  );
+}
+
+// Компонент inline редактирования наличия
+function InlineStockEditor({ product, onSave }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(product.in_stock ?? true);
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const queryClient = useQueryClient();
+
+  const handleSave = async (newValue) => {
+    const stockValue = typeof newValue === 'boolean' ? newValue : value;
+    try {
+      const response = await fetch(`${apiUrl}/api/products/${product.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...product, in_stock: stockValue }),
+      });
+      if (!response.ok) throw new Error('Ошибка обновления');
+      queryClient.invalidateQueries(['admin-products']);
+      setValue(stockValue);
+      setIsEditing(false);
+      toast.success('Наличие обновлено');
+    } catch (error) {
+      toast.error('Ошибка обновления наличия');
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <select
+        value={value ? 'true' : 'false'}
+        onChange={(e) => handleSave(e.target.value === 'true')}
+        onBlur={() => setIsEditing(false)}
+        className="w-32 px-2 py-1 border border-slate-300 rounded text-sm"
+        autoFocus
+      >
+        <option value="true">В наличии</option>
+        <option value="false">Нет в наличии</option>
+      </select>
+    );
+  }
+
+  return (
+    <span
+      onClick={() => setIsEditing(true)}
+      className={`cursor-pointer hover:bg-slate-100 px-2 py-1 rounded transition-colors inline-block ${
+        value ? 'text-emerald-600' : 'text-red-600'
+      }`}
+      title="Нажмите для редактирования"
+    >
+      {value ? 'В наличии' : 'Нет в наличии'}
+    </span>
+  );
+}
+
 // Компонент управления товарами
 function ProductsManager() {
   const [showForm, setShowForm] = useState(false);
@@ -412,13 +532,14 @@ function ProductsManager() {
                   <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Название</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Категория</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Цена</th>
+                  <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">В наличии</th>
                   <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold">Действия</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filteredProducts.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="px-3 sm:px-4 py-8 text-center text-slate-500">
+                    <td colSpan="7" className="px-3 sm:px-4 py-8 text-center text-slate-500">
                       {searchQuery ? 'Товары не найдены' : 'Нет товаров'}
                     </td>
                   </tr>
@@ -436,14 +557,26 @@ function ProductsManager() {
                       <td className="px-3 sm:px-4 py-3 text-sm">{product.id}</td>
                       <td className="px-3 sm:px-4 py-3 text-sm">{product.name}</td>
                       <td className="px-3 sm:px-4 py-3 text-sm text-slate-600">{categoryPath}</td>
-                      <td className="px-3 sm:px-4 py-3 text-sm">{product.price} ₽</td>
-                      <td className="px-3 sm:px-4 py-3 text-sm">{product.brand || '-'}</td>
+                      <td className="px-3 sm:px-4 py-3 text-sm">
+                        <InlinePriceEditor product={product} />
+                      </td>
+                      <td className="px-3 sm:px-4 py-3 text-sm">
+                        <InlineStockEditor product={product} />
+                      </td>
                       <td className="px-3 sm:px-4 py-3">
                         <div className="flex gap-1 sm:gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => { setEditingProduct(product); setShowForm(true); }}
+                            onClick={() => { 
+                              // Закрываем текущее редактирование если открыто
+                              if (showForm && editingProduct?.id !== product.id) {
+                                setShowForm(false);
+                                setEditingProduct(null);
+                              }
+                              setEditingProduct(product); 
+                              setShowForm(true); 
+                            }}
                             className="text-xs sm:text-sm"
                           >
                             Редактировать
@@ -480,7 +613,7 @@ function ProductsManager() {
                     <p className="font-semibold text-slate-900">{product.name}</p>
                     <p className="text-xs text-slate-500">ID: {product.id}</p>
                   </div>
-                  <p className="font-bold text-slate-900">{product.price} ₽</p>
+                  <p className="font-bold text-slate-900">{product.price?.toLocaleString('ru-RU')} ₽</p>
                 </div>
                 {(() => {
                   const categoryPath = [
@@ -492,6 +625,11 @@ function ProductsManager() {
                     <p className="text-sm text-slate-600">Категория: {categoryPath}</p>
                   );
                 })()}
+                <p className="text-sm text-slate-600">
+                  В наличии: <span className={product.in_stock !== false ? 'text-emerald-600' : 'text-red-600'}>
+                    {product.in_stock !== false ? 'Да' : 'Нет'}
+                  </span>
+                </p>
                 {product.brand && (
                   <p className="text-sm text-slate-600">Бренд: {product.brand}</p>
                 )}
@@ -554,7 +692,7 @@ function ProductForm({ product, onClose, onSuccess }) {
     featured: product?.featured ?? false,
     popular: product?.popular ?? false,
     on_sale: product?.on_sale ?? false,
-    condition: product?.condition || 'new',
+    condition: 'new', // Всегда новый товар
     rating: product?.rating || '',
     specs: parsedSpecs,
   });
@@ -703,6 +841,7 @@ function ProductForm({ product, onClose, onSuccess }) {
       subsubcategory_name: formData.subsubcategory || null,
       category_name_2: formData.category_2 || null,
       specs: specsObj,
+      condition: 'new', // Всегда новый товар
     };
     saveMutation.mutate(submitData);
   };
@@ -1049,19 +1188,16 @@ function ProductForm({ product, onClose, onSuccess }) {
           </label>
         </div>
         <div>
-          <Label>Состояние</Label>
-          <Select
-            value={formData.condition || 'new'}
-            onValueChange={(value) => setFormData({ ...formData, condition: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Выберите состояние" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="new">Новое</SelectItem>
-              <SelectItem value="used">Б/У</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label>Рейтинг</Label>
+          <Input
+            type="number"
+            min="0"
+            max="5"
+            step="0.1"
+            value={formData.rating || ''}
+            onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
+            placeholder="0-5"
+          />
         </div>
         <div className="flex gap-2">
           <Button type="submit" disabled={saveMutation.isPending}>

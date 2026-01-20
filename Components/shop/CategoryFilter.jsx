@@ -6,12 +6,6 @@ import { Label } from "../../Components/ui/label.jsx";
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-const conditions = [
-  { value: 'all', label: 'Все' },
-  { value: 'new', label: 'Новое' },
-  { value: 'used', label: 'Б/У' },
-];
-
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function CategoryFilter({ 
@@ -119,31 +113,6 @@ export default function CategoryFilter({
   
   return (
     <div className="space-y-6">
-      {/* Состояние */}
-      <div>
-        <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3">
-          Состояние
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {conditions.map((cond) => (
-            <motion.div key={cond.value} whileTap={{ scale: 0.95 }} className="flex-shrink-0">
-              <Button
-                variant={selectedCondition === cond.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCondition(cond.value)}
-                className={`rounded-full px-4 transition-all whitespace-nowrap ${
-                  selectedCondition === cond.value 
-                    ? 'bg-slate-900 text-white shadow-lg' 
-                    : 'bg-white hover:bg-slate-50 border-slate-200'
-                }`}
-              >
-                {cond.label}
-              </Button>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
       {/* Цена */}
       <div>
         <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3">

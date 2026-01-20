@@ -74,6 +74,9 @@ export default function Shop() {
     // ВАЖНО: Используем только location.pathname в зависимостях, чтобы избежать циклов
     // location.search обрабатываем внутри через проверку ref
     if (!location.pathname.includes('/shop')) {
+      // Если не на странице shop, сбрасываем refs
+      lastLocationRef.current = null;
+      urlParamsProcessedRef.current = null;
       return;
     }
 
@@ -89,6 +92,9 @@ export default function Shop() {
       lastLocationRef.current = currentUrlKey;
       return;
     }
+    
+    // Помечаем, что начинаем обработку
+    lastLocationRef.current = currentUrlKey;
     
     // Проверяем, пришли ли мы с карточки товара
     const navigationFromShop = sessionStorage.getItem('navigation_from_shop');
@@ -277,19 +283,26 @@ export default function Shop() {
 
     // Сохраняем фильтры в sessionStorage только если мы на странице каталога
     if (location.pathname.includes('/shop')) {
-      const filters = {
-        category: selectedCategory,
-        subcategory: selectedSubcategory,
-        subSubcategory: selectedSubSubcategory,
-        brand: selectedBrand,
-        condition: selectedCondition,
-        priceMin,
-        priceMax,
-        searchQuery,
-      };
-      sessionStorage.setItem('shop_filters', JSON.stringify(filters));
+      try {
+        const filters = {
+          category: selectedCategory,
+          subcategory: selectedSubcategory,
+          subSubcategory: selectedSubSubcategory,
+          brand: selectedBrand,
+          condition: selectedCondition,
+          priceMin,
+          priceMax,
+          searchQuery,
+        };
+        // Используем JSON.stringify с проверкой, чтобы избежать циклических ссылок
+        const filtersString = JSON.stringify(filters);
+        sessionStorage.setItem('shop_filters', filtersString);
+      } catch (error) {
+        console.error('Ошибка сохранения фильтров:', error);
+      }
     }
-  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, selectedCondition, priceMin, priceMax, searchQuery, location.pathname]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, selectedCondition, priceMin, priceMax, searchQuery]);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
@@ -497,8 +510,28 @@ export default function Shop() {
   const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
   // Сброс на первую страницу при изменении фильтров
+  // Используем useRef для отслеживания предыдущих значений, чтобы избежать лишних обновлений
+  const prevFiltersRef = useRef({});
   useEffect(() => {
-    setCurrentPage(1);
+    const currentFilters = {
+      category: selectedCategory,
+      subcategory: selectedSubcategory,
+      subSubcategory: selectedSubSubcategory,
+      brand: selectedBrand,
+      condition: selectedCondition,
+      priceMin,
+      priceMax,
+      searchQuery,
+      sortBy,
+    };
+    
+    // Сравниваем текущие фильтры с предыдущими
+    const filtersChanged = JSON.stringify(currentFilters) !== JSON.stringify(prevFiltersRef.current);
+    
+    if (filtersChanged) {
+      prevFiltersRef.current = currentFilters;
+      setCurrentPage(1);
+    }
   }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, selectedCondition, priceMin, priceMax, searchQuery, sortBy]);
 
   // Скролл наверх при смене страницы

@@ -118,8 +118,7 @@ export default function CategoryFilter({
     { value: 5, label: '5 звезд', exactRating: 5.00 },
     { value: 4, label: '4 звезды', exactRating: 4.00 },
     { value: 3, label: '3 звезды', exactRating: 3.00 },
-    { value: 2, label: '2 звезды', exactRating: 2.00 },
-    { value: 1, label: '1 звезда', exactRating: 1.00 },
+    { value: 'less_than_3', label: 'Менее 3 звезд', minRating: 0, maxRating: 2.99 },
   ];
 
   return (

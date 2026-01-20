@@ -490,12 +490,19 @@ export default function Shop() {
     // Убрали фильтр по состоянию - всегда только новые товары
     .filter(p => !p.condition || p.condition === 'new')
     .filter(p => {
-      // Фильтр по рейтингу (точное значение)
+      // Фильтр по рейтингу
       if (selectedRating !== null && selectedRating !== undefined) {
         const productRating = parseFloat(p.rating) || 0;
-        const exactRating = selectedRating;
-        // Проверяем, что рейтинг равен выбранному значению (с небольшой погрешностью для float)
-        return Math.abs(productRating - exactRating) < 0.01;
+        
+        // "Менее 3 звезд" - рейтинг от 0 до 2.99
+        if (selectedRating === 'less_than_3') {
+          return productRating >= 0 && productRating < 3.00;
+        }
+        
+        // Точное значение для 3, 4, 5 звезд
+        if (typeof selectedRating === 'number') {
+          return Math.abs(productRating - selectedRating) < 0.01;
+        }
       }
       return true;
     })

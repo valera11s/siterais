@@ -13,7 +13,8 @@
     "migrate": "node migrate-mock-products.js",
     "migrate-categories": "node migrate-categories-to-db.js",
     "backup-db": "node backup-db.js",
-    "restore-db": "node restore-db.js"
+    "restore-db": "node restore-db.js",
+    "set-ratings-5": "node set-all-ratings-5.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",

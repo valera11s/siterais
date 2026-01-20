@@ -98,7 +98,19 @@ export default function CategoryMenuBar() {
     return sorted;
   }, [mainCategories]);
 
+  // Очистка таймаута при размонтировании
+  // ВАЖНО: этот useEffect должен быть ВСЕГДА вызван, даже если компонент вернет null
+  useEffect(() => {
+    return () => {
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current);
+        leaveTimeoutRef.current = null;
+      }
+    };
+  }, []); // Пустой массив зависимостей - выполняется только при размонтировании
+
   // Если данные еще загружаются или страница каталога - не показываем меню
+  // ВАЖНО: этот return должен быть ПОСЛЕ всех хуков
   if (isLoadingCategories || isShopPage || orderedCategories.length === 0) {
     return null;
   }
@@ -161,16 +173,6 @@ export default function CategoryMenuBar() {
     const url = `${createPageUrl('Shop')}?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}`;
     navigate(url);
   };
-
-  // Очистка таймаута при размонтировании
-  useEffect(() => {
-    return () => {
-      if (leaveTimeoutRef.current) {
-        clearTimeout(leaveTimeoutRef.current);
-        leaveTimeoutRef.current = null;
-      }
-    };
-  }, []); // Пустой массив зависимостей - выполняется только при размонтировании
 
   return (
     <div className="bg-white border-b border-slate-200 shadow-sm sticky top-[76.8px] z-30 relative">

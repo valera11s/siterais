@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,33 +8,23 @@ import { createPageUrl } from '../../src/utils.js';
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function CategoryMenuBar() {
+  // ВСЕ хуки должны быть вызваны ПЕРВЫМИ, до любых условных возвратов
+  
+  // 1. useState хуки
   const [hoveredCategory, setHoveredCategory] = useState(null);
   const [dropdownPosition, setDropdownPosition] = useState({ left: 0, width: 0 });
+  
+  // 2. useRef хуки
   const categoryRefs = useRef({});
   const dropdownRef = useRef(null);
   const menuContainerRef = useRef(null);
   const leaveTimeoutRef = useRef(null);
+  
+  // 3. Router хуки
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Используем стабильную ссылку на функцию очистки через useRef
-  const cleanupTimeoutRef = useRef(() => {
-    if (leaveTimeoutRef.current) {
-      clearTimeout(leaveTimeoutRef.current);
-      leaveTimeoutRef.current = null;
-    }
-  });
-  
-  const cleanupTimeout = cleanupTimeoutRef.current;
-  
-  // Количество категорий для отображения (остальные в "Еще")
-  const MAX_VISIBLE_CATEGORIES = 5;
-  
-  // Скрываем меню на странице каталога
-  const isShopPage = location.pathname.includes('/shop') || location.pathname.includes(createPageUrl('Shop'));
-
-  // Загружаем все категории одним запросом (оптимизация)
-  // Используем структурное сравнение и отключаем все автоматические обновления
+  // 4. useQuery хук - ВСЕГДА вызывается
   const { data: allCategoriesDataRaw = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ['all-categories-menu'],
     queryFn: async () => {
@@ -43,50 +33,34 @@ export default function CategoryMenuBar() {
       const data = await response.json();
       return data;
     },
-    staleTime: Infinity, // Данные никогда не устаревают
-    gcTime: Infinity, // Храним в кэше навсегда
-    refetchOnMount: false, // Не перезагружаем при монтировании
-    refetchOnWindowFocus: false, // Не перезагружаем при фокусе окна
-    refetchOnReconnect: false, // Не перезагружаем при переподключении
-    refetchInterval: false, // Отключаем интервальные обновления
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
     structuralSharing: (oldData, newData) => {
-      // Используем структурное сравнение - возвращаем старые данные, если они идентичны
       if (!oldData || !newData) return newData || oldData;
       if (oldData.length !== newData.length) return newData;
-      // Сравниваем по ID
       const oldIds = oldData.map(c => c.id).sort().join(',');
       const newIds = newData.map(c => c.id).sort().join(',');
       return oldIds === newIds ? oldData : newData;
     },
   });
   
-  // Стабилизируем данные через useRef, чтобы избежать лишних ре-рендеров
-  const allCategoriesDataRef = useRef([]);
-  
-  // Обновляем ref только если данные действительно изменились
-  React.useEffect(() => {
-    // Сравниваем по длине и первому элементу для простоты
-    if (allCategoriesDataRaw.length !== allCategoriesDataRef.current.length ||
-        (allCategoriesDataRaw.length > 0 && allCategoriesDataRaw[0]?.id !== allCategoriesDataRef.current[0]?.id)) {
-      allCategoriesDataRef.current = allCategoriesDataRaw;
-    }
+  // 5. useMemo хуки - ВСЕГДА вызываются
+  const allCategoriesData = useMemo(() => {
+    return allCategoriesDataRaw || [];
   }, [allCategoriesDataRaw]);
   
-  const allCategoriesData = allCategoriesDataRef.current;
-
-  // Фильтруем основные категории (level 0) из всех категорий
-  // Используем стабильную ссылку на массив, чтобы избежать лишних пересчетов
-  const mainCategories = React.useMemo(() => {
+  const mainCategories = useMemo(() => {
     if (!allCategoriesData || allCategoriesData.length === 0) return [];
     return allCategoriesData.filter(cat => cat.level === 0);
   }, [allCategoriesData]);
 
-  // Фильтруем категории по порядку: Видеокамеры, Фотоаппараты, Объективы, Экшен-камеры, Ноутбуки
-  // ВАЖНО: используем useMemo и создаем новый массив, а не мутируем исходный
-  const orderedCategories = React.useMemo(() => {
+  const orderedCategories = useMemo(() => {
     if (!mainCategories || mainCategories.length === 0) return [];
     const order = ['Видеокамеры', 'Фотоаппараты', 'Объективы', 'Экшен-камеры', 'Ноутбуки'];
-    // Создаем копию массива перед сортировкой
     const sorted = [...mainCategories].sort((a, b) => {
       const indexA = order.indexOf(a.name);
       const indexB = order.indexOf(b.name);
@@ -97,9 +71,50 @@ export default function CategoryMenuBar() {
     });
     return sorted;
   }, [mainCategories]);
-
-  // Очистка таймаута при размонтировании
-  // ВАЖНО: этот useEffect должен быть ВСЕГДА вызван, даже если компонент вернет null
+  
+  // 6. useCallback хуки - ВСЕГДА вызываются
+  const cleanupTimeout = useCallback(() => {
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current);
+      leaveTimeoutRef.current = null;
+    }
+  }, []);
+  
+  const getSubcategories = useCallback((categoryId) => {
+    return allCategoriesData.filter(cat => cat.parent_id === categoryId);
+  }, [allCategoriesData]);
+  
+  const handleCategoryMouseLeave = useCallback((e) => {
+    cleanupTimeout();
+    const relatedTarget = e.relatedTarget;
+    if (relatedTarget && dropdownRef.current?.contains(relatedTarget)) {
+      return;
+    }
+    leaveTimeoutRef.current = setTimeout(() => {
+      if (!dropdownRef.current?.matches(':hover')) {
+        setHoveredCategory(null);
+      }
+    }, 150);
+  }, [cleanupTimeout]);
+  
+  const handleDropdownMouseLeave = useCallback(() => {
+    cleanupTimeout();
+    leaveTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null);
+    }, 150);
+  }, [cleanupTimeout]);
+  
+  const handleCategoryClick = useCallback((categoryName) => {
+    navigate(`${createPageUrl('Shop')}?category=${categoryName}`);
+  }, [navigate]);
+  
+  const handleSubcategoryClick = useCallback((e, subcategoryName, categoryName) => {
+    e.preventDefault();
+    const url = `${createPageUrl('Shop')}?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}`;
+    navigate(url);
+  }, [navigate]);
+  
+  // 7. useEffect хук - ВСЕГДА вызывается
   useEffect(() => {
     return () => {
       if (leaveTimeoutRef.current) {
@@ -107,77 +122,25 @@ export default function CategoryMenuBar() {
         leaveTimeoutRef.current = null;
       }
     };
-  }, []); // Пустой массив зависимостей - выполняется только при размонтировании
-
-  // Если данные еще загружаются или страница каталога - не показываем меню
-  // ВАЖНО: этот return должен быть ПОСЛЕ всех хуков
+  }, []);
+  
+  // ТОЛЬКО ПОСЛЕ ВСЕХ ХУКОВ - условные проверки и возвраты
+  const MAX_VISIBLE_CATEGORIES = 5;
+  const isShopPage = location.pathname.includes('/shop') || location.pathname.includes(createPageUrl('Shop'));
+  
+  // Условный возврат - ПОСЛЕ всех хуков
   if (isLoadingCategories || isShopPage || orderedCategories.length === 0) {
     return null;
   }
-
-  // Разделяем категории на видимые и скрытые (для "Еще")
+  
+  // Остальная логика компонента
   const visibleCategories = orderedCategories.slice(0, MAX_VISIBLE_CATEGORIES);
   const hiddenCategories = orderedCategories.slice(MAX_VISIBLE_CATEGORIES);
-
-  // Получаем подкатегории для категории
-  // Убрали useCallback, так как он вызывал бесконечные циклы при изменении allCategoriesData
-  const getSubcategories = (categoryId) => {
-    return allCategoriesData.filter(cat => cat.parent_id === categoryId);
-  };
-
-
-  // Обработчик ухода мыши с категории
-  const handleCategoryMouseLeave = (e) => {
-    // Очищаем предыдущий таймаут
-    if (leaveTimeoutRef.current) {
-      clearTimeout(leaveTimeoutRef.current);
-    }
-
-    // Проверяем, не переходим ли мы на выпадающее меню
-    const relatedTarget = e.relatedTarget;
-    if (relatedTarget && dropdownRef.current?.contains(relatedTarget)) {
-      return; // Не закрываем, если переходим на выпадающее меню
-    }
-
-    // Добавляем небольшую задержку перед закрытием
-    leaveTimeoutRef.current = setTimeout(() => {
-      // Проверяем еще раз, не наведена ли мышь на меню
-      if (!dropdownRef.current?.matches(':hover')) {
-        setHoveredCategory(null);
-      }
-    }, 150);
-  };
-
-  // Обработчик ухода мыши с выпадающего меню
-  // Используем useRef для стабильной ссылки, чтобы избежать ре-рендеров
-  const handleDropdownMouseLeaveRef = useRef(() => {
-    if (leaveTimeoutRef.current) {
-      clearTimeout(leaveTimeoutRef.current);
-      leaveTimeoutRef.current = null;
-    }
-    leaveTimeoutRef.current = setTimeout(() => {
-      setHoveredCategory(null);
-    }, 150);
-  });
-  
-  const handleDropdownMouseLeave = handleDropdownMouseLeaveRef.current;
-
-  // Обработчик клика на категорию
-  const handleCategoryClick = (categoryName) => {
-    navigate(`${createPageUrl('Shop')}?category=${categoryName}`);
-  };
-
-  // Обработчик клика на подкатегорию
-  const handleSubcategoryClick = (e, subcategoryName, categoryName) => {
-    e.preventDefault();
-    const url = `${createPageUrl('Shop')}?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}`;
-    navigate(url);
-  };
 
   return (
     <div className="bg-white border-b border-slate-200 shadow-sm sticky top-[76.8px] z-30 relative">
       <div ref={menuContainerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        {/* Мобильная версия - одна кнопка "Каталог товаров" */}
+        {/* Мобильная версия */}
         <div className="md:hidden">
           <Link
             to={createPageUrl('Shop')}
@@ -198,13 +161,8 @@ export default function CategoryMenuBar() {
                 key={category.id}
                 ref={(el) => (categoryRefs.current[category.id] = el)}
                 className="relative flex-1"
-                onMouseEnter={(e) => {
-                  // Отменяем таймаут закрытия, если он был
-                  if (leaveTimeoutRef.current) {
-                    clearTimeout(leaveTimeoutRef.current);
-                    leaveTimeoutRef.current = null;
-                  }
-                  // Устанавливаем hoveredCategory только если он изменился
+                onMouseEnter={() => {
+                  cleanupTimeout();
                   if (hoveredCategory !== category.id) {
                     setHoveredCategory(category.id);
                   }
@@ -214,10 +172,7 @@ export default function CategoryMenuBar() {
                 <Link
                   to={`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name)}`}
                   className="flex items-center justify-center gap-2 px-4 py-4 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors whitespace-nowrap relative w-full"
-                  onClick={(e) => {
-                    // При клике на категорию всегда переходим
-                    handleCategoryClick(category.name);
-                  }}
+                  onClick={() => handleCategoryClick(category.name)}
                 >
                   {category.name}
                   {hasSubcategories && (
@@ -228,15 +183,13 @@ export default function CategoryMenuBar() {
             );
           })}
           
-          {/* Блок "Еще" для остальных категорий */}
+          {/* Блок "Еще" */}
           {hiddenCategories.length > 0 && (
             <div
               ref={(el) => (categoryRefs.current['more'] = el)}
               className="relative flex-1"
-              onMouseEnter={(e) => {
-                // Отменяем таймаут закрытия, если он был
+              onMouseEnter={() => {
                 cleanupTimeout();
-                // Устанавливаем hoveredCategory только если он изменился
                 if (hoveredCategory !== 'more') {
                   setHoveredCategory('more');
                 }
@@ -246,9 +199,7 @@ export default function CategoryMenuBar() {
               <Link
                 to={createPageUrl('Shop')}
                 className="flex items-center justify-center gap-2 px-4 py-4 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors whitespace-nowrap relative w-full"
-                onClick={(e) => {
-                  navigate(createPageUrl('Shop'));
-                }}
+                onClick={() => navigate(createPageUrl('Shop'))}
               >
                 Еще
                 <ChevronDown className="h-5 w-5 text-slate-500" />
@@ -257,7 +208,7 @@ export default function CategoryMenuBar() {
           )}
         </nav>
 
-        {/* Выпадающее меню с подкатегориями (общее для всех категорий) */}
+        {/* Выпадающее меню с подкатегориями */}
         <AnimatePresence>
           {hoveredCategory && hoveredCategory !== 'more' && (() => {
             const category = visibleCategories.find(c => c.id === hoveredCategory);
@@ -274,12 +225,7 @@ export default function CategoryMenuBar() {
                 transition={{ duration: 0.2 }}
                 className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-4 z-[100]"
                 onMouseEnter={() => {
-                  // Отменяем таймаут закрытия
-                  if (leaveTimeoutRef.current) {
-                    clearTimeout(leaveTimeoutRef.current);
-                    leaveTimeoutRef.current = null;
-                  }
-                  // Не устанавливаем hoveredCategory, если он уже установлен - избегаем лишних обновлений
+                  cleanupTimeout();
                   if (hoveredCategory !== category.id) {
                     setHoveredCategory(category.id);
                   }
@@ -314,9 +260,7 @@ export default function CategoryMenuBar() {
               transition={{ duration: 0.2 }}
               className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-4 z-50"
               onMouseEnter={() => {
-                // Отменяем таймаут закрытия
                 cleanupTimeout();
-                // Не устанавливаем hoveredCategory, если он уже установлен - избегаем лишних обновлений
                 if (hoveredCategory !== 'more') {
                   setHoveredCategory('more');
                 }
@@ -342,4 +286,3 @@ export default function CategoryMenuBar() {
     </div>
   );
 }
-

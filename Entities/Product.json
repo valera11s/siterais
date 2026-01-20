@@ -1,0 +1,110 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Camera model name"
+    },
+    "brand": {
+      "type": "string",
+      "enum": [
+        "Sony",
+        "Canon",
+        "Nikon",
+        "Fujifilm",
+        "Panasonic",
+        "Leica",
+        "Olympus"
+      ],
+      "description": "Camera brand"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "DSLR",
+        "Mirrorless",
+        "Compact",
+        "Action",
+        "Medium Format",
+        "Instant"
+      ],
+      "description": "Camera category"
+    },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "new",
+        "used"
+      ],
+      "default": "new",
+      "description": "Product condition - new or used"
+    },
+    "price": {
+      "type": "number",
+      "description": "Price in RUB"
+    },
+    "original_price": {
+      "type": "number",
+      "description": "Original price before discount"
+    },
+    "description": {
+      "type": "string",
+      "description": "Product description"
+    },
+    "specs": {
+      "type": "object",
+      "description": "Technical specifications",
+      "properties": {
+        "sensor": {
+          "type": "string"
+        },
+        "megapixels": {
+          "type": "number"
+        },
+        "iso_range": {
+          "type": "string"
+        },
+        "video": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "string"
+        }
+      }
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Main product image URL"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Additional product images"
+    },
+    "in_stock": {
+      "type": "boolean",
+      "default": true
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "rating": {
+      "type": "number",
+      "description": "Average rating 1-5"
+    },
+    "reviews_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "name",
+    "brand",
+    "category",
+    "price"
+  ]
+}

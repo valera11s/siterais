@@ -1,0 +1,23 @@
+{
+  "name": "CartItem",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Reference to product"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1
+    },
+    "session_id": {
+      "type": "string",
+      "description": "User session or email identifier"
+    }
+  },
+  "required": [
+    "product_id",
+    "quantity",
+    "session_id"
+  ]
+}

@@ -36,6 +36,7 @@ export default function Shop() {
   const urlParamsProcessedRef = useRef(null); // Храним обработанный URL ключ
   const isProcessingUrlRef = useRef(false); // Флаг обработки URL
   const lastLocationRef = useRef(null); // Храним последний обработанный location
+  const prevSavedFiltersRef = useRef(null); // Храним предыдущие сохраненные фильтры
   const productsPerPage = 21;
 
   // На мобильных устройствах фильтры должны быть частично открыты по умолчанию
@@ -77,6 +78,7 @@ export default function Shop() {
       // Если не на странице shop, сбрасываем refs
       lastLocationRef.current = null;
       urlParamsProcessedRef.current = null;
+      isProcessingUrlRef.current = false;
       return;
     }
 
@@ -88,13 +90,18 @@ export default function Shop() {
     }
     
     // Если уже обрабатываем URL или уже обработали этот URL - пропускаем
-    if (isProcessingUrlRef.current || urlParamsProcessedRef.current === currentUrlKey) {
+    if (isProcessingUrlRef.current) {
+      return;
+    }
+    
+    if (urlParamsProcessedRef.current === currentUrlKey) {
       lastLocationRef.current = currentUrlKey;
       return;
     }
     
     // Помечаем, что начинаем обработку
     lastLocationRef.current = currentUrlKey;
+    isProcessingUrlRef.current = true;
     
     // Проверяем, пришли ли мы с карточки товара
     const navigationFromShop = sessionStorage.getItem('navigation_from_shop');
@@ -132,6 +139,9 @@ export default function Shop() {
         }
         // Удаляем флаг после использования
         sessionStorage.removeItem('navigation_from_shop');
+        // Завершаем обработку
+        urlParamsProcessedRef.current = currentUrlKey;
+        isProcessingUrlRef.current = false;
       } else {
         // Пришли не с карточки товара - проверяем параметры category и subcategory из URL
         const urlParams = new URLSearchParams(location.search);
@@ -296,7 +306,12 @@ export default function Shop() {
         };
         // Используем JSON.stringify с проверкой, чтобы избежать циклических ссылок
         const filtersString = JSON.stringify(filters);
-        sessionStorage.setItem('shop_filters', filtersString);
+        
+        // Сохраняем только если фильтры изменились
+        if (filtersString !== prevSavedFiltersRef.current) {
+          prevSavedFiltersRef.current = filtersString;
+          sessionStorage.setItem('shop_filters', filtersString);
+        }
       } catch (error) {
         console.error('Ошибка сохранения фильтров:', error);
       }
@@ -511,7 +526,8 @@ export default function Shop() {
 
   // Сброс на первую страницу при изменении фильтров
   // Используем useRef для отслеживания предыдущих значений, чтобы избежать лишних обновлений
-  const prevFiltersRef = useRef({});
+  const prevFiltersStringRef = useRef(null);
+  
   useEffect(() => {
     const currentFilters = {
       category: selectedCategory,
@@ -525,12 +541,24 @@ export default function Shop() {
       sortBy,
     };
     
-    // Сравниваем текущие фильтры с предыдущими
-    const filtersChanged = JSON.stringify(currentFilters) !== JSON.stringify(prevFiltersRef.current);
+    const currentFiltersString = JSON.stringify(currentFilters);
     
-    if (filtersChanged) {
-      prevFiltersRef.current = currentFilters;
-      setCurrentPage(1);
+    // Инициализируем при первом рендере
+    if (prevFiltersStringRef.current === null) {
+      prevFiltersStringRef.current = currentFiltersString;
+      return;
+    }
+    
+    // Сравниваем текущие фильтры с предыдущими
+    if (currentFiltersString !== prevFiltersStringRef.current) {
+      prevFiltersStringRef.current = currentFiltersString;
+      // Сбрасываем страницу только если она не первая
+      setCurrentPage(prev => {
+        if (prev !== 1) {
+          return 1;
+        }
+        return prev;
+      });
     }
   }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, selectedCondition, priceMin, priceMax, searchQuery, sortBy]);
 

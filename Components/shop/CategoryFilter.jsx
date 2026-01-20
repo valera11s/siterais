@@ -115,10 +115,10 @@ export default function CategoryFilter({
   
   const ratingOptions = [
     { value: null, label: 'Все' },
-    { value: 5, label: '5 звезд', exactRating: 5.00 },
-    { value: 4, label: '4 звезды', exactRating: 4.00 },
-    { value: 3, label: '3 звезды', exactRating: 3.00 },
-    { value: 'less_than_3', label: 'Менее 3 звезд', minRating: 0, maxRating: 2.99 },
+    { value: 5, label: '5 звезд' },
+    { value: 4, label: '4 звезды' },
+    { value: 3, label: '3 звезды' },
+    { value: 'less', label: 'Менее' },
   ];
 
   return (
@@ -143,7 +143,7 @@ export default function CategoryFilter({
                       : 'bg-white hover:bg-slate-50 border-slate-200'
                   }`}
                 >
-                  {option.value !== null && (
+                  {option.value !== null && option.value !== 'less' && (
                     <div className="flex items-center gap-1 mr-1">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star

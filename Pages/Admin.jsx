@@ -2694,8 +2694,17 @@ function ChatsManager() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-slate-900 truncate">
-                          Чат #{chat.id}
+                          {chat.user_name ? chat.user_name : `Чат #${chat.id}`}
                         </p>
+                        {chat.user_phone && (
+                          <p className="text-xs text-slate-500 truncate mt-0.5">📱 {chat.user_phone}</p>
+                        )}
+                        {chat.user_email && (
+                          <p className="text-xs text-slate-500 truncate mt-0.5">✉️ {chat.user_email}</p>
+                        )}
+                        {!chat.user_name && !chat.user_phone && !chat.user_email && (
+                          <p className="text-xs text-slate-400 mt-0.5">Данные не указаны</p>
+                        )}
                       </div>
                       {unreadCount > 0 && (
                         <span className="ml-2 bg-emerald-500 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">
@@ -2714,6 +2723,23 @@ function ChatsManager() {
         <div className="flex-1 flex flex-col">
           {selectedChat && currentChat ? (
             <>
+              {/* Информация о пользователе в открытом чате */}
+              {(currentChat.user_name || currentChat.user_email || currentChat.user_phone) && (
+                <div className="p-4 border-b border-slate-200 bg-slate-50">
+                  <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Контактная информация</p>
+                  <div className="space-y-1">
+                    {currentChat.user_name && (
+                      <p className="text-sm text-slate-900">👤 {currentChat.user_name}</p>
+                    )}
+                    {currentChat.user_phone && (
+                      <p className="text-sm text-slate-900">📱 {currentChat.user_phone}</p>
+                    )}
+                    {currentChat.user_email && (
+                      <p className="text-sm text-slate-900">✉️ {currentChat.user_email}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {currentChat.messages?.map((msg) => (
                   <div

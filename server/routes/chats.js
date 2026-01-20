@@ -13,6 +13,9 @@ router.get('/', async (req, res) => {
         c.id,
         c.session_id,
         c.status,
+        c.user_name,
+        c.user_email,
+        c.user_phone,
         c.created_at,
         c.updated_at,
         COUNT(cm.id) as messages_count,
@@ -43,12 +46,15 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Получаем информацию о чате (без персональных данных)
+    // Получаем информацию о чате (с персональными данными для админки)
     const chatResult = await pool.query(`
       SELECT 
         id, 
         session_id, 
-        status, 
+        status,
+        user_name,
+        user_email,
+        user_phone,
         created_at, 
         updated_at 
       FROM chats WHERE id = $1

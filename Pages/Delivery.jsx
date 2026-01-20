@@ -87,13 +87,13 @@ export default function Delivery() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow"
+                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow flex flex-col h-full"
               >
                 <div className={`w-14 h-14 rounded-2xl ${method.color} flex items-center justify-center mb-4`}>
                   <method.icon className="w-7 h-7" />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 mb-2">{method.title}</h3>
-                <p className="text-slate-500 mb-4">{method.description}</p>
+                <p className="text-slate-500 mb-4 min-h-[3rem] flex-grow">{method.description}</p>
                 {/* Адрес магазина для самовывоза */}
                 {method.title === 'Самовывоз' && settings.address && (
                   <div className="mb-4 p-3 bg-slate-50 rounded-lg">
@@ -101,7 +101,11 @@ export default function Delivery() {
                     <p className="text-slate-900 font-medium">{settings.address}</p>
                   </div>
                 )}
-                <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                {/* Пустое место для выравнивания, если нет адреса */}
+                {method.title !== 'Самовывоз' && (
+                  <div className="mb-4 min-h-[4.5rem]"></div>
+                )}
+                <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-auto">
                   <div>
                     <p className="text-sm text-slate-400">Стоимость</p>
                     <p className="font-semibold text-slate-900">{method.price}</p>

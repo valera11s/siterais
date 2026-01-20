@@ -11,7 +11,7 @@ import { Camera, Truck, Shield, Headphones } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const features = [
-  { icon: Truck, title: 'Бесплатная доставка', desc: 'При заказе от 50 000 ₽' },
+  { icon: Truck, title: 'Быстрая доставка', desc: 'Просто и дешевая' },
   { icon: Shield, title: 'Гарантия 1 год', desc: 'Официальная гарантия' },
   { icon: Headphones, title: 'Поддержка 24/7', desc: 'Всегда на связи' },
   { icon: Camera, title: 'Оригинальная техника', desc: 'Сертифицированные товары' },

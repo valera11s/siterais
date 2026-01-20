@@ -48,6 +48,7 @@ export default function SaleProducts({ products, onAddToCart }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
+              className="h-full"
             >
               <ProductCard product={product} onAddToCart={onAddToCart} />
             </motion.div>

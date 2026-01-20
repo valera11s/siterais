@@ -12,12 +12,8 @@ export default defineConfig({
   })],
   build: {
     sourcemap: true, // Включаем source maps для отладки production ошибок
-    minify: 'terser', // Используем terser для лучшей минификации
-    terserOptions: {
-      compress: {
-        drop_console: false, // Оставляем console для отладки
-      },
-    },
+    // Используем esbuild по умолчанию (быстрее и не требует дополнительных зависимостей)
+    minify: 'esbuild',
   },
   resolve: {
     alias: [

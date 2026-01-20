@@ -131,33 +131,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Подписка на рассылку */}
-      <section className="py-20 bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-2xl mx-auto"
-          >
-            <h2 className="text-3xl font-bold mb-4">Будьте в курсе</h2>
-            <p className="text-slate-400 mb-8">
-              Подпишитесь на рассылку и получайте эксклюзивные скидки, новинки и советы по фотографии
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Ваш email"
-                className="flex-1 px-5 py-3 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-white/30"
-              />
-              <button className="px-8 py-3 rounded-full bg-white text-slate-900 font-semibold hover:bg-slate-100 transition-colors">
-                Подписаться
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       <CartDrawer
         open={cartOpen}
         onClose={() => setCartOpen(false)}

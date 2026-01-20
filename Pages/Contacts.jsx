@@ -129,15 +129,29 @@ export default function Contacts() {
                 )}
 
                 {settings.address && (
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-5 h-5 text-purple-600" />
+                  <>
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-900">Адрес</h3>
+                        <p className="text-slate-600 whitespace-pre-line">{settings.address}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900">Адрес</h3>
-                      <p className="text-slate-600 whitespace-pre-line">{settings.address}</p>
+                    {/* Мини карта Яндекс */}
+                    <div className="mt-6 rounded-xl overflow-hidden shadow-sm border border-slate-200">
+                      <iframe
+                        src={`https://yandex.ru/map-widget/v1/?text=${encodeURIComponent(settings.address)}&z=15&lang=ru_RU`}
+                        width="100%"
+                        height="300"
+                        frameBorder="0"
+                        allowFullScreen
+                        style={{ border: 0 }}
+                        title="Карта магазина"
+                      />
                     </div>
-                  </div>
+                  </>
                 )}
 
                 {settings.working_hours && (

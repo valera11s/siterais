@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Truck, Package, Clock, MapPin, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const deliveryMethods = [
   {
@@ -38,6 +41,20 @@ const features = [
 ];
 
 export default function Delivery() {
+  // Скролл наверх при открытии страницы
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
+  const { data: settings = {} } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const response = await fetch(`${apiUrl}/api/settings`);
+      if (!response.ok) throw new Error('Ошибка загрузки настроек');
+      return response.json();
+    },
+  });
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Заголовок */}
@@ -77,6 +94,13 @@ export default function Delivery() {
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 mb-2">{method.title}</h3>
                 <p className="text-slate-500 mb-4">{method.description}</p>
+                {/* Адрес магазина для самовывоза */}
+                {method.title === 'Самовывоз' && settings.address && (
+                  <div className="mb-4 p-3 bg-slate-50 rounded-lg">
+                    <p className="text-sm text-slate-500 mb-1">Адрес магазина:</p>
+                    <p className="text-slate-900 font-medium">{settings.address}</p>
+                  </div>
+                )}
                 <div className="flex justify-between items-center pt-4 border-t border-slate-100">
                   <div>
                     <p className="text-sm text-slate-400">Стоимость</p>

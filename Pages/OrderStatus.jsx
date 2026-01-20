@@ -369,7 +369,47 @@ export default function OrderStatus() {
                     <Separator className="my-2" />
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Адрес магазина:</p>
-                      <p className="text-slate-600">{order.shipping_address.address}</p>
+                      <p className="text-slate-600 mb-3">{order.shipping_address.address}</p>
+                      {/* Мини карта Яндекс для самовывоза */}
+                      <div className="rounded-lg overflow-hidden shadow-sm border border-slate-200">
+                        <iframe
+                          src={`https://yandex.ru/map-widget/v1/?text=${encodeURIComponent(order.shipping_address.address)}&z=15&lang=ru_RU`}
+                          width="100%"
+                          height="250"
+                          frameBorder="0"
+                          allowFullScreen
+                          style={{ border: 0 }}
+                          title="Карта магазина"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {/* Мини карта для доставки курьером или в пункт выдачи */}
+                {order.shipping_address.delivery_method && 
+                 order.shipping_address.delivery_method !== 'pickup' && 
+                 order.shipping_address.address && (
+                  <>
+                    <Separator className="my-2" />
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">Адрес доставки:</p>
+                      <p className="text-slate-600 mb-3">
+                        {order.shipping_address.address}, {order.shipping_address.city}
+                        {order.shipping_address.postal_code && `, ${order.shipping_address.postal_code}`}
+                      </p>
+                      {/* Мини карта Яндекс для адреса доставки */}
+                      <div className="rounded-lg overflow-hidden shadow-sm border border-slate-200">
+                        <iframe
+                          src={`https://yandex.ru/map-widget/v1/?text=${encodeURIComponent(`${order.shipping_address.address}, ${order.shipping_address.city}`)}&z=15&lang=ru_RU`}
+                          width="100%"
+                          height="250"
+                          frameBorder="0"
+                          allowFullScreen
+                          style={{ border: 0 }}
+                          title="Карта доставки"
+                        />
+                      </div>
                     </div>
                   </>
                 )}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Users, Award, Heart, ShieldCheck, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -33,6 +33,11 @@ const values = [
 ];
 
 export default function About() {
+  // Скролл наверх при открытии страницы
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Заголовок */}

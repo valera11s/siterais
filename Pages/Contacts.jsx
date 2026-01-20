@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "../Components/ui/button.jsx";
 import { Input } from "../Components/ui/input.jsx";
@@ -11,6 +11,11 @@ import { toast } from 'sonner';
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function Contacts() {
+  // Скролл наверх при открытии страницы
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+
   const { data: settings = {} } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {

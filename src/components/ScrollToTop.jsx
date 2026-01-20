@@ -27,10 +27,11 @@ export default function ScrollToTop() {
         sessionStorage.removeItem(SCROLL_POSITION_KEY);
       }, 100);
     } else if (currentPath !== prevPath) {
-      // Для всех остальных переходов (включая переход между товарами) скроллим наверх
+      // Для всех остальных переходов скроллим наверх мгновенно
+      // Используем 'instant' вместо 'smooth' для предотвращения проблем на мобильных
       window.scrollTo({
         top: 0,
-        behavior: 'smooth'
+        behavior: 'instant'
       });
     }
     

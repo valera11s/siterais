@@ -816,6 +816,7 @@ export default function Shop() {
                         duration: 0.25,
                         ease: [0.4, 0, 0.2, 1]
                       }}
+                      className="h-full"
                     >
                       <ProductCard 
                         product={product} 

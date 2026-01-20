@@ -1,23 +1,23 @@
 // Защита от DDoS атак
-// Блокирует IP адреса, которые делают более 1500 запросов за час
+// Блокирует IP адреса, которые делают более 200 запросов за минуту
 
 import { pool } from '../index.js';
 
 // Хранилище запросов в памяти (ключ - IP, значение - массив временных меток)
 const requestStore = new Map();
 
-// Очистка старых запросов (запускается каждую минуту)
+// Очистка старых запросов (запускается каждые 10 секунд для более точного подсчета)
 setInterval(() => {
-  const oneHourAgo = Date.now() - (60 * 60 * 1000);
+  const oneMinuteAgo = Date.now() - (60 * 1000);
   for (const [ip, timestamps] of requestStore.entries()) {
-    const filtered = timestamps.filter(timestamp => timestamp > oneHourAgo);
+    const filtered = timestamps.filter(timestamp => timestamp > oneMinuteAgo);
     if (filtered.length === 0) {
       requestStore.delete(ip);
     } else {
       requestStore.set(ip, filtered);
     }
   }
-}, 60000); // Каждую минуту
+}, 10000); // Каждые 10 секунд для более точного подсчета
 
 // Проверка, заблокирован ли IP
 async function isIPBlocked(ip) {
@@ -34,7 +34,7 @@ async function isIPBlocked(ip) {
 }
 
 // Блокировка IP
-async function blockIP(ip, reason = 'DDoS атака (более 1500 запросов за час)') {
+async function blockIP(ip, reason = 'DDoS атака (более 200 запросов за минуту)') {
   try {
     // Проверяем, не заблокирован ли уже
     const existing = await pool.query(
@@ -74,15 +74,15 @@ export function ddosProtection(req, res, next) {
 
     // Получаем текущие запросы для этого IP
     const timestamps = requestStore.get(clientIP) || [];
-    const oneHourAgo = Date.now() - (60 * 60 * 1000);
-    const recentRequests = timestamps.filter(timestamp => timestamp > oneHourAgo);
+    const oneMinuteAgo = Date.now() - (60 * 1000);
+    const recentRequests = timestamps.filter(timestamp => timestamp > oneMinuteAgo);
 
     // Добавляем текущий запрос
     recentRequests.push(Date.now());
     requestStore.set(clientIP, recentRequests);
 
-    // Если больше 1500 запросов за час - блокируем
-    if (recentRequests.length > 1500) {
+    // Если больше 200 запросов за минуту - блокируем
+    if (recentRequests.length > 200) {
       blockIP(clientIP);
       return res.status(429).json({ 
         error: 'Слишком много запросов',

@@ -373,7 +373,7 @@ export default function OrderStatus() {
                       {/* Мини карта Яндекс для самовывоза */}
                       <div className="rounded-lg overflow-hidden shadow-sm border border-slate-200">
                         <iframe
-                          src={`https://yandex.ru/map-widget/v1/?text=${encodeURIComponent(order.shipping_address.address)}&z=15&lang=ru_RU&pt=auto`}
+                          src="https://yandex.ru/map-widget/v1/-/CLtU7208"
                           width="100%"
                           height="250"
                           frameBorder="0"

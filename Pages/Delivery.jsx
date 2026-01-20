@@ -93,18 +93,16 @@ export default function Delivery() {
                   <method.icon className="w-7 h-7" />
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 mb-2">{method.title}</h3>
-                <p className="text-slate-500 mb-4 min-h-[3rem] flex-grow">{method.description}</p>
-                {/* Адрес магазина для самовывоза */}
-                {method.title === 'Самовывоз' && settings.address && (
-                  <div className="mb-4 p-3 bg-slate-50 rounded-lg">
-                    <p className="text-sm text-slate-500 mb-1">Адрес магазина:</p>
-                    <p className="text-slate-900 font-medium">{settings.address}</p>
-                  </div>
-                )}
-                {/* Пустое место для выравнивания, если нет адреса */}
-                {method.title !== 'Самовывоз' && (
-                  <div className="mb-4 min-h-[4.5rem]"></div>
-                )}
+                <div className="flex-grow mb-4">
+                  <p className="text-slate-500 mb-3">{method.description}</p>
+                  {/* Адрес магазина для самовывоза */}
+                  {method.title === 'Самовывоз' && settings.address && (
+                    <div className="p-3 bg-slate-50 rounded-lg">
+                      <p className="text-sm text-slate-500 mb-1">Адрес магазина:</p>
+                      <p className="text-slate-900 font-medium text-sm">{settings.address}</p>
+                    </div>
+                  )}
+                </div>
                 <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-auto">
                   <div>
                     <p className="text-sm text-slate-400">Стоимость</p>

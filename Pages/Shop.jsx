@@ -544,7 +544,6 @@ export default function Shop() {
       subcategory: selectedSubcategory,
       subSubcategory: selectedSubSubcategory,
       brand: selectedBrand,
-      condition: selectedCondition,
       priceMin,
       priceMax,
       searchQuery,

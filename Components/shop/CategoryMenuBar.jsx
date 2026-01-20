@@ -17,13 +17,15 @@ export default function CategoryMenuBar() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Используем стабильную ссылку на функцию очистки
-  const cleanupTimeout = React.useCallback(() => {
+  // Используем стабильную ссылку на функцию очистки через useRef
+  const cleanupTimeoutRef = useRef(() => {
     if (leaveTimeoutRef.current) {
       clearTimeout(leaveTimeoutRef.current);
       leaveTimeoutRef.current = null;
     }
-  }, []);
+  });
+  
+  const cleanupTimeout = cleanupTimeoutRef.current;
   
   // Количество категорий для отображения (остальные в "Еще")
   const MAX_VISIBLE_CATEGORIES = 5;
@@ -109,12 +111,18 @@ export default function CategoryMenuBar() {
   };
 
   // Обработчик ухода мыши с выпадающего меню
-  const handleDropdownMouseLeave = React.useCallback(() => {
-    cleanupTimeout();
+  // Используем useRef для стабильной ссылки, чтобы избежать ре-рендеров
+  const handleDropdownMouseLeaveRef = useRef(() => {
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current);
+      leaveTimeoutRef.current = null;
+    }
     leaveTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null);
     }, 150);
-  }, [cleanupTimeout]);
+  });
+  
+  const handleDropdownMouseLeave = handleDropdownMouseLeaveRef.current;
 
   // Обработчик клика на категорию
   const handleCategoryClick = (categoryName) => {
@@ -130,8 +138,13 @@ export default function CategoryMenuBar() {
 
   // Очистка таймаута при размонтировании
   useEffect(() => {
-    return cleanupTimeout;
-  }, [cleanupTimeout]);
+    return () => {
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current);
+        leaveTimeoutRef.current = null;
+      }
+    };
+  }, []); // Пустой массив зависимостей - выполняется только при размонтировании
 
   return (
     <div className="bg-white border-b border-slate-200 shadow-sm sticky top-[76.8px] z-30 relative">

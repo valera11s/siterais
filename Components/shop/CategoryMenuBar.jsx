@@ -34,19 +34,36 @@ export default function CategoryMenuBar() {
   const isShopPage = location.pathname.includes('/shop') || location.pathname.includes(createPageUrl('Shop'));
 
   // Загружаем все категории одним запросом (оптимизация)
-  const { data: allCategoriesData = [], isLoading: isLoadingCategories } = useQuery({
+  // Используем структурное сравнение и отключаем все автоматические обновления
+  const { data: allCategoriesDataRaw = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ['all-categories-menu'],
     queryFn: async () => {
       const response = await fetch(`${apiUrl}/api/categories?all=true`);
       if (!response.ok) return [];
-      return response.json();
+      const data = await response.json();
+      return data;
     },
-    staleTime: 5 * 60 * 1000, // Кэшируем на 5 минут
-    gcTime: 10 * 60 * 1000, // Храним в кэше 10 минут (cacheTime переименован в gcTime в v5)
+    staleTime: Infinity, // Данные никогда не устаревают
+    gcTime: Infinity, // Храним в кэше навсегда
     refetchOnMount: false, // Не перезагружаем при монтировании
     refetchOnWindowFocus: false, // Не перезагружаем при фокусе окна
     refetchOnReconnect: false, // Не перезагружаем при переподключении
+    refetchInterval: false, // Отключаем интервальные обновления
+    structuralSharing: (oldData, newData) => {
+      // Используем структурное сравнение - возвращаем старые данные, если они идентичны
+      if (!oldData || !newData) return newData || oldData;
+      if (oldData.length !== newData.length) return newData;
+      // Сравниваем по ID
+      const oldIds = oldData.map(c => c.id).sort().join(',');
+      const newIds = newData.map(c => c.id).sort().join(',');
+      return oldIds === newIds ? oldData : newData;
+    },
   });
+  
+  // Стабилизируем данные через useMemo с глубоким сравнением
+  const allCategoriesData = React.useMemo(() => {
+    return allCategoriesDataRaw;
+  }, [JSON.stringify(allCategoriesDataRaw)]);
 
   // Фильтруем основные категории (level 0) из всех категорий
   // Используем стабильную ссылку на массив, чтобы избежать лишних пересчетов

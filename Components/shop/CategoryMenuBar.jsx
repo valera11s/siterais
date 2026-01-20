@@ -123,12 +123,20 @@ export default function CategoryMenuBar() {
   };
 
   // Очистка таймаута при размонтировании
+  // Используем useRef для хранения функции очистки, чтобы избежать лишних эффектов
+  const cleanupRef = useRef(null);
+  
   useEffect(() => {
-    return () => {
+    // Сохраняем функцию очистки в ref
+    cleanupRef.current = () => {
       if (leaveTimeoutRef.current) {
         clearTimeout(leaveTimeoutRef.current);
+        leaveTimeoutRef.current = null;
       }
     };
+    
+    // Возвращаем функцию очистки
+    return cleanupRef.current;
   }, []);
 
   return (
@@ -161,7 +169,10 @@ export default function CategoryMenuBar() {
                     clearTimeout(leaveTimeoutRef.current);
                     leaveTimeoutRef.current = null;
                   }
-                  setHoveredCategory(category.id);
+                  // Устанавливаем hoveredCategory только если он изменился
+                  if (hoveredCategory !== category.id) {
+                    setHoveredCategory(category.id);
+                  }
                 }}
                 onMouseLeave={handleCategoryMouseLeave}
               >
@@ -193,7 +204,10 @@ export default function CategoryMenuBar() {
                   clearTimeout(leaveTimeoutRef.current);
                   leaveTimeoutRef.current = null;
                 }
-                setHoveredCategory('more');
+                // Устанавливаем hoveredCategory только если он изменился
+                if (hoveredCategory !== 'more') {
+                  setHoveredCategory('more');
+                }
               }}
               onMouseLeave={handleCategoryMouseLeave}
             >

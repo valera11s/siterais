@@ -92,14 +92,19 @@ async function runBatch() {
   const promises = [];
   for (let i = 0; i < REQUESTS_PER_SECOND; i++) {
     promises.push(
-      makeRequest(TARGET_URL, ENDPOINT).catch((error) => {
-        stats.errors++;
-        return { error: error.message };
-      })
+      makeRequest(TARGET_URL, ENDPOINT)
+        .then((result) => {
+          stats.total++;
+          return result;
+        })
+        .catch((error) => {
+          stats.total++;
+          stats.errors++;
+          return { error: error.message };
+        })
     );
   }
   await Promise.all(promises);
-  stats.total += REQUESTS_PER_SECOND;
 }
 
 // Вычисление статистики

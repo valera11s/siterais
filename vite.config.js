@@ -10,6 +10,15 @@ export default defineConfig({
   plugins: [react({
     jsxRuntime: 'automatic',
   })],
+  build: {
+    sourcemap: true, // Включаем source maps для отладки production ошибок
+    minify: 'terser', // Используем terser для лучшей минификации
+    terserOptions: {
+      compress: {
+        drop_console: false, // Оставляем console для отладки
+      },
+    },
+  },
   resolve: {
     alias: [
       {

@@ -32,7 +32,10 @@ export default function CategoryMenuBar() {
       return response.json();
     },
     staleTime: 5 * 60 * 1000, // Кэшируем на 5 минут
-    cacheTime: 10 * 60 * 1000, // Храним в кэше 10 минут
+    gcTime: 10 * 60 * 1000, // Храним в кэше 10 минут (cacheTime переименован в gcTime в v5)
+    refetchOnMount: false, // Не перезагружаем при монтировании
+    refetchOnWindowFocus: false, // Не перезагружаем при фокусе окна
+    refetchOnReconnect: false, // Не перезагружаем при переподключении
   });
 
   // Фильтруем основные категории (level 0) из всех категорий

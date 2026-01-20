@@ -64,7 +64,13 @@ function App() {
         <Layout>
           <AppRoutes />
         </Layout>
-        <Toaster position="top-right" richColors />
+        <Toaster 
+          position="top-right" 
+          richColors 
+          toastOptions={{
+            className: 'mobile-toast-top',
+          }}
+        />
       </BrowserRouter>
     </QueryClientProvider>
   );

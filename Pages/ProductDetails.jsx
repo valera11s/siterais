@@ -37,6 +37,11 @@ export default function ProductDetails() {
     navigate(createPageUrl('Shop'));
   };
 
+  // Скролл наверх при открытии карточки товара
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [slug, productId]);
+
   useEffect(() => {
     const initSession = async () => {
       const isAuth = await apiClient.auth.isAuthenticated();

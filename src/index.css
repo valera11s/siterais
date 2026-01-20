@@ -68,6 +68,18 @@
   }
 }
 
+/* Уведомления на мобильных устройствах - всегда сверху */
+@media (max-width: 768px) {
+  [data-sonner-toaster] {
+    top: 0 !important;
+    bottom: auto !important;
+  }
+  
+  [data-sonner-toast] {
+    margin-top: 1rem !important;
+  }
+}
+
 /* Скрытие скроллбара для горизонтального меню категорий */
 .scrollbar-hide {
   -ms-overflow-style: none;

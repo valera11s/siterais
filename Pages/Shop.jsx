@@ -490,10 +490,12 @@ export default function Shop() {
     // Убрали фильтр по состоянию - всегда только новые товары
     .filter(p => !p.condition || p.condition === 'new')
     .filter(p => {
-      // Фильтр по рейтингу
+      // Фильтр по рейтингу (точное значение)
       if (selectedRating !== null && selectedRating !== undefined) {
         const productRating = parseFloat(p.rating) || 0;
-        return productRating >= selectedRating;
+        const exactRating = selectedRating;
+        // Проверяем, что рейтинг равен выбранному значению (с небольшой погрешностью для float)
+        return Math.abs(productRating - exactRating) < 0.01;
       }
       return true;
     })

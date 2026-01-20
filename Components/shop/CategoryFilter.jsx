@@ -114,11 +114,12 @@ export default function CategoryFilter({
   const INITIAL_ITEMS_COUNT = 8;
   
   const ratingOptions = [
-    { value: null, label: 'Все', minRating: null },
-    { value: 4, label: '4+ звезды', minRating: 4 },
-    { value: 3, label: '3+ звезды', minRating: 3 },
-    { value: 2, label: '2+ звезды', minRating: 2 },
-    { value: 1, label: '1+ звезда', minRating: 1 },
+    { value: null, label: 'Все' },
+    { value: 5, label: '5 звезд', exactRating: 5.00 },
+    { value: 4, label: '4 звезды', exactRating: 4.00 },
+    { value: 3, label: '3 звезды', exactRating: 3.00 },
+    { value: 2, label: '2 звезды', exactRating: 2.00 },
+    { value: 1, label: '1 звезда', exactRating: 1.00 },
   ];
 
   return (

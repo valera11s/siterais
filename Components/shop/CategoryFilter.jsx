@@ -4,7 +4,7 @@ import { Button } from "../../Components/ui/button.jsx";
 import { Input } from "../../Components/ui/input.jsx";
 import { Label } from "../../Components/ui/label.jsx";
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Star } from 'lucide-react';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -20,7 +20,9 @@ export default function CategoryFilter({
   priceMin,
   setPriceMin,
   priceMax,
-  setPriceMax
+  setPriceMax,
+  selectedRating,
+  setSelectedRating
 }) {
   // Получаем все категории из БД
   // Используем тот же queryKey, что и CategoryMenuBar, для единого кэша
@@ -111,8 +113,58 @@ export default function CategoryFilter({
   // Количество элементов для показа до разворачивания
   const INITIAL_ITEMS_COUNT = 8;
   
+  const ratingOptions = [
+    { value: null, label: 'Все', minRating: null },
+    { value: 4, label: '4+ звезды', minRating: 4 },
+    { value: 3, label: '3+ звезды', minRating: 3 },
+    { value: 2, label: '2+ звезды', minRating: 2 },
+    { value: 1, label: '1+ звезда', minRating: 1 },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Рейтинг */}
+      <div>
+        <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3">
+          Рейтинг
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {ratingOptions.map((option) => {
+            const isSelected = selectedRating === option.value;
+            return (
+              <motion.div key={option.value ?? 'all'} whileTap={{ scale: 0.95 }} className="flex-shrink-0">
+                <Button
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedRating(option.value)}
+                  className={`rounded-full px-4 transition-all whitespace-nowrap ${
+                    isSelected 
+                      ? 'bg-slate-900 text-white shadow-lg' 
+                      : 'bg-white hover:bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  {option.value !== null && (
+                    <div className="flex items-center gap-1 mr-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-3 h-3 ${
+                            star <= option.value 
+                              ? 'fill-amber-400 text-amber-400' 
+                              : 'text-slate-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {option.label}
+                </Button>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Цена */}
       <div>
         <h3 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3">

@@ -23,6 +23,7 @@ export default function Shop() {
   // Убрали фильтр по состоянию - всегда только новые товары
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
+  const [selectedRating, setSelectedRating] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('featured');
   const [cartOpen, setCartOpen] = useState(false);
@@ -124,6 +125,7 @@ export default function Shop() {
               setSelectedBrand(Array.isArray(filters.brand) ? filters.brand : (filters.brand === 'all' ? [] : (filters.brand ? [filters.brand] : [])));
               setPriceMin(filters.priceMin || '');
               setPriceMax(filters.priceMax || '');
+              setSelectedRating(filters.selectedRating !== undefined ? filters.selectedRating : null);
               setSearchQuery(filters.searchQuery || '');
             });
             
@@ -178,6 +180,7 @@ export default function Shop() {
                     setSelectedBrand([]);
                     setPriceMin('');
                     setPriceMax('');
+                    setSelectedRating(null);
                     setSearchQuery('');
                   });
                   // НЕ используем window.history.replaceState, чтобы не вызывать циклы
@@ -254,9 +257,9 @@ export default function Shop() {
                 setSelectedSubcategory([]);
                 setSelectedSubSubcategory([]);
                 setSelectedBrand([]);
-                setSelectedCondition('all');
                 setPriceMin('');
                 setPriceMax('');
+                setSelectedRating(null);
                 setSearchQuery('');
               });
               sessionStorage.removeItem('shop_filters');
@@ -311,6 +314,7 @@ export default function Shop() {
           brand: selectedBrand,
           priceMin,
           priceMax,
+          selectedRating,
           searchQuery,
         };
         // Используем JSON.stringify с проверкой, чтобы избежать циклических ссылок
@@ -326,7 +330,7 @@ export default function Shop() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, priceMin, priceMax, searchQuery]);
+  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, priceMin, priceMax, selectedRating, searchQuery]);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
@@ -485,6 +489,14 @@ export default function Shop() {
     })
     // Убрали фильтр по состоянию - всегда только новые товары
     .filter(p => !p.condition || p.condition === 'new')
+    .filter(p => {
+      // Фильтр по рейтингу
+      if (selectedRating !== null && selectedRating !== undefined) {
+        const productRating = parseFloat(p.rating) || 0;
+        return productRating >= selectedRating;
+      }
+      return true;
+    })
     .filter(p => !priceMin || p.price >= Number(priceMin))
     .filter(p => !priceMax || p.price <= Number(priceMax))
     .filter(p => {
@@ -546,6 +558,7 @@ export default function Shop() {
       brand: selectedBrand,
       priceMin,
       priceMax,
+      selectedRating,
       searchQuery,
       sortBy,
     };
@@ -569,7 +582,7 @@ export default function Shop() {
         return prev;
       });
     }
-  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, priceMin, priceMax, searchQuery, sortBy]);
+  }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedBrand, priceMin, priceMax, selectedRating, searchQuery, sortBy]);
 
   // Скролл наверх при смене страницы
   useEffect(() => {
@@ -585,6 +598,7 @@ export default function Shop() {
     setSelectedBrand([]);
     setPriceMin('');
     setPriceMax('');
+    setSelectedRating(null);
     setSearchQuery('');
     // Очищаем сохраненные фильтры при явном сбросе
     sessionStorage.removeItem('shop_filters');
@@ -681,6 +695,8 @@ export default function Shop() {
                     setPriceMin={setPriceMin}
                     priceMax={priceMax}
                     setPriceMax={setPriceMax}
+                    selectedRating={selectedRating}
+                    setSelectedRating={setSelectedRating}
                   />
                   
                   {/* Градиентная маска для свернутых фильтров на мобильных */}

@@ -1,5 +1,5 @@
 // Защита от DDoS атак
-// Блокирует IP адреса, которые делают более 500 запросов за час
+// Блокирует IP адреса, которые делают более 1500 запросов за час
 
 import { pool } from '../index.js';
 
@@ -34,7 +34,7 @@ async function isIPBlocked(ip) {
 }
 
 // Блокировка IP
-async function blockIP(ip, reason = 'DDoS атака (более 500 запросов за час)') {
+async function blockIP(ip, reason = 'DDoS атака (более 1500 запросов за час)') {
   try {
     // Проверяем, не заблокирован ли уже
     const existing = await pool.query(
@@ -81,8 +81,8 @@ export function ddosProtection(req, res, next) {
     recentRequests.push(Date.now());
     requestStore.set(clientIP, recentRequests);
 
-    // Если больше 500 запросов за час - блокируем
-    if (recentRequests.length > 500) {
+    // Если больше 1500 запросов за час - блокируем
+    if (recentRequests.length > 1500) {
       blockIP(clientIP);
       return res.status(429).json({ 
         error: 'Слишком много запросов',

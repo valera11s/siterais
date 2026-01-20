@@ -15,7 +15,8 @@
     "backup-db": "node backup-db.js",
     "restore-db": "node restore-db.js",
     "set-ratings-5": "node set-all-ratings-5.js",
-    "download-images": "node download-external-images.js"
+    "download-images": "node download-external-images.js",
+    "load-test": "node load-test.js"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.1.2",

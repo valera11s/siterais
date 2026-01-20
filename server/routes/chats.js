@@ -10,7 +10,11 @@ router.get('/', async (req, res) => {
     const { status } = req.query;
     let query = `
       SELECT 
-        c.*,
+        c.id,
+        c.session_id,
+        c.status,
+        c.created_at,
+        c.updated_at,
         COUNT(cm.id) as messages_count,
         MAX(cm.created_at) as last_message_at,
         (SELECT COUNT(*) FROM chat_messages WHERE chat_id = c.id AND sender = 'user' AND is_read = false) as unread_count
@@ -39,8 +43,16 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Получаем информацию о чате
-    const chatResult = await pool.query('SELECT * FROM chats WHERE id = $1', [id]);
+    // Получаем информацию о чате (без персональных данных)
+    const chatResult = await pool.query(`
+      SELECT 
+        id, 
+        session_id, 
+        status, 
+        created_at, 
+        updated_at 
+      FROM chats WHERE id = $1
+    `, [id]);
     if (chatResult.rows.length === 0) {
       return res.status(404).json({ error: 'Чат не найден' });
     }

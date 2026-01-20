@@ -28,6 +28,8 @@ import messagesRoutes from './routes/messages.js';
 import uploadRoutes from './routes/upload.js';
 import chatsRoutes from './routes/chats.js';
 import blockedIPsRoutes from './routes/blocked-ips.js';
+import { ddosProtection } from './utils/ddos-protection.js';
+import { startCleanupScheduler } from './utils/cleanup-old-chats.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,6 +39,9 @@ app.use(cors());
 
 // Trust proxy для правильного определения IP клиента (важно для получения реального IP через прокси/CDN)
 app.set('trust proxy', true);
+
+// Защита от DDoS (применяется ко всем маршрутам)
+app.use(ddosProtection);
 
 // Middleware для явной установки UTF-8 в заголовках всех JSON ответов
 app.use((req, res, next) => {
@@ -94,6 +99,8 @@ app.get('/api/health', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на http://localhost:${PORT}`);
+  // Запускаем планировщик очистки старых чатов
+  startCleanupScheduler();
 });
 
 

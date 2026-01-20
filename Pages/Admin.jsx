@@ -2694,14 +2694,8 @@ function ChatsManager() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-slate-900 truncate">
-                          {chat.user_name || 'Пользователь'}
+                          Чат #{chat.id}
                         </p>
-                        {chat.user_email && (
-                          <p className="text-xs text-slate-500 truncate">{chat.user_email}</p>
-                        )}
-                        {chat.user_phone && (
-                          <p className="text-xs text-slate-500">{chat.user_phone}</p>
-                        )}
                       </div>
                       {unreadCount > 0 && (
                         <span className="ml-2 bg-emerald-500 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0">

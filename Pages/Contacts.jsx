@@ -142,7 +142,7 @@ export default function Contacts() {
                     {/* Мини карта Яндекс */}
                     <div className="mt-6 rounded-xl overflow-hidden shadow-sm border border-slate-200">
                       <iframe
-                        src={`https://yandex.ru/map-widget/v1/?text=${encodeURIComponent(settings.address)}&z=15&lang=ru_RU`}
+                        src={`https://yandex.ru/map-widget/v1/?${encodeURIComponent(settings.address)}&z=15&lang=ru_RU`}
                         width="100%"
                         height="300"
                         frameBorder="0"

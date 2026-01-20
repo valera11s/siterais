@@ -578,27 +578,53 @@ function ProductForm({ product, onClose, onSuccess }) {
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-  // Получить доступные подкатегории для выбранной категории
+  // Загружаем все категории из базы данных
+  const { data: allCategories = [] } = useQuery({
+    queryKey: ['all-categories-admin'],
+    queryFn: async () => {
+      const response = await fetch(`${apiUrl}/api/categories?all=true`);
+      if (!response.ok) return [];
+      return await response.json();
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Получить доступные подкатегории для выбранной категории из БД
   const getSubcategories = () => {
-    if (!formData.category || !CATEGORIES[formData.category]) return [];
-    const subcats = CATEGORIES[formData.category].subcategories;
-    return Object.keys(subcats || {});
+    if (!formData.category || !Array.isArray(allCategories)) return [];
+    
+    // Находим категорию по названию
+    const category = allCategories.find(cat => 
+      (cat.name === formData.category || cat.id === formData.category) && 
+      (cat.level === 0 || !cat.level)
+    );
+    
+    if (!category) return [];
+    
+    // Возвращаем все подкатегории (level 1) для этой категории
+    return allCategories
+      .filter(cat => cat.parent_id === category.id)
+      .map(cat => cat.name)
+      .sort();
   };
 
-  // Получить доступные под-подкатегории для выбранной подкатегории
+  // Получить доступные под-подкатегории для выбранной подкатегории из БД
   const getSubSubcategories = () => {
-    if (!formData.category || !formData.subcategory) return [];
-    const subcats = CATEGORIES[formData.category]?.subcategories;
-    if (!subcats || !subcats[formData.subcategory]) return [];
+    if (!formData.category || !formData.subcategory || !Array.isArray(allCategories)) return [];
     
-    const subcat = subcats[formData.subcategory];
-    // Если это массив, вернуть его
-    if (Array.isArray(subcat)) return subcat;
-    // Если это объект с subcategories, вернуть массив
-    if (subcat.subcategories && Array.isArray(subcat.subcategories)) {
-      return subcat.subcategories;
-    }
-    return [];
+    // Находим подкатегорию по названию
+    const subcategory = allCategories.find(cat => 
+      cat.name === formData.subcategory && 
+      (cat.level === 1 || cat.parent_id)
+    );
+    
+    if (!subcategory) return [];
+    
+    // Возвращаем все под-подкатегории (level 2) для этой подкатегории
+    return allCategories
+      .filter(cat => cat.parent_id === subcategory.id)
+      .map(cat => cat.name)
+      .sort();
   };
 
   // Обработчики изменений категорий (сброс зависимых полей)

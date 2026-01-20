@@ -8,71 +8,64 @@ import { createPageUrl } from '../../src/utils.js';
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function CategoryMenuBar() {
-  // ВСЕ хуки должны быть вызваны ПЕРВЫМИ, до любых условных возвратов
+  // ========== ВСЕ ХУКИ В НАЧАЛЕ ==========
   
-  // 1. useState хуки
+  // State
   const [hoveredCategory, setHoveredCategory] = useState(null);
-  const [dropdownPosition, setDropdownPosition] = useState({ left: 0, width: 0 });
   
-  // 2. useRef хуки
-  const categoryRefs = useRef({});
+  // Refs
   const dropdownRef = useRef(null);
-  const menuContainerRef = useRef(null);
   const leaveTimeoutRef = useRef(null);
   
-  // 3. Router хуки
+  // Router hooks
   const navigate = useNavigate();
   const location = useLocation();
   
-  // 4. useQuery хук - ВСЕГДА вызывается
-  const { data: allCategoriesDataRaw = [], isLoading: isLoadingCategories } = useQuery({
+  // Query - ВСЕГДА вызывается
+  const { data: allCategories = [], isLoading } = useQuery({
     queryKey: ['all-categories-menu'],
     queryFn: async () => {
-      const response = await fetch(`${apiUrl}/api/categories?all=true`);
-      if (!response.ok) return [];
-      const data = await response.json();
-      return data;
+      try {
+        const response = await fetch(`${apiUrl}/api/categories?all=true`);
+        if (!response.ok) return [];
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+      }
     },
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 10 * 60 * 1000, // 10 минут
+    gcTime: 30 * 60 * 1000, // 30 минут
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: false,
-    structuralSharing: (oldData, newData) => {
-      if (!oldData || !newData) return newData || oldData;
-      if (oldData.length !== newData.length) return newData;
-      const oldIds = oldData.map(c => c.id).sort().join(',');
-      const newIds = newData.map(c => c.id).sort().join(',');
-      return oldIds === newIds ? oldData : newData;
-    },
   });
   
-  // 5. useMemo хуки - ВСЕГДА вызываются
-  const allCategoriesData = useMemo(() => {
-    return allCategoriesDataRaw || [];
-  }, [allCategoriesDataRaw]);
-  
+  // Memoized вычисления - ВСЕГДА вызываются
   const mainCategories = useMemo(() => {
-    if (!allCategoriesData || allCategoriesData.length === 0) return [];
-    return allCategoriesData.filter(cat => cat.level === 0);
-  }, [allCategoriesData]);
-
+    if (!Array.isArray(allCategories) || allCategories.length === 0) return [];
+    return allCategories.filter(cat => cat.level === 0 || !cat.level);
+  }, [allCategories]);
+  
   const orderedCategories = useMemo(() => {
-    if (!mainCategories || mainCategories.length === 0) return [];
+    if (!Array.isArray(mainCategories) || mainCategories.length === 0) return [];
     const order = ['Видеокамеры', 'Фотоаппараты', 'Объективы', 'Экшен-камеры', 'Ноутбуки'];
-    const sorted = [...mainCategories].sort((a, b) => {
+    return [...mainCategories].sort((a, b) => {
       const indexA = order.indexOf(a.name);
       const indexB = order.indexOf(b.name);
       if (indexA !== -1 && indexB !== -1) return indexA - indexB;
       if (indexA !== -1) return -1;
       if (indexB !== -1) return 1;
-      return a.name.localeCompare(b.name);
+      return (a.name || '').localeCompare(b.name || '');
     });
-    return sorted;
   }, [mainCategories]);
   
-  // 6. useCallback хуки - ВСЕГДА вызываются
+  const getSubcategories = useCallback((categoryId) => {
+    if (!Array.isArray(allCategories) || !categoryId) return [];
+    return allCategories.filter(cat => cat.parent_id === categoryId);
+  }, [allCategories]);
+  
+  // Callbacks
   const cleanupTimeout = useCallback(() => {
     if (leaveTimeoutRef.current) {
       clearTimeout(leaveTimeoutRef.current);
@@ -80,66 +73,38 @@ export default function CategoryMenuBar() {
     }
   }, []);
   
-  const getSubcategories = useCallback((categoryId) => {
-    return allCategoriesData.filter(cat => cat.parent_id === categoryId);
-  }, [allCategoriesData]);
-  
-  const handleCategoryMouseLeave = useCallback((e) => {
-    cleanupTimeout();
-    const relatedTarget = e.relatedTarget;
-    if (relatedTarget && dropdownRef.current?.contains(relatedTarget)) {
-      return;
-    }
-    leaveTimeoutRef.current = setTimeout(() => {
-      if (!dropdownRef.current?.matches(':hover')) {
-        setHoveredCategory(null);
-      }
-    }, 150);
-  }, [cleanupTimeout]);
-  
-  const handleDropdownMouseLeave = useCallback(() => {
+  const handleMouseLeave = useCallback(() => {
     cleanupTimeout();
     leaveTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null);
     }, 150);
   }, [cleanupTimeout]);
   
-  const handleCategoryClick = useCallback((categoryName) => {
-    navigate(`${createPageUrl('Shop')}?category=${categoryName}`);
-  }, [navigate]);
-  
-  const handleSubcategoryClick = useCallback((e, subcategoryName, categoryName) => {
-    e.preventDefault();
-    const url = `${createPageUrl('Shop')}?category=${encodeURIComponent(categoryName)}&subcategory=${encodeURIComponent(subcategoryName)}`;
-    navigate(url);
-  }, [navigate]);
-  
-  // 7. useEffect хук - ВСЕГДА вызывается
+  // Effect для очистки
   useEffect(() => {
     return () => {
-      if (leaveTimeoutRef.current) {
-        clearTimeout(leaveTimeoutRef.current);
-        leaveTimeoutRef.current = null;
-      }
+      cleanupTimeout();
     };
-  }, []);
+  }, [cleanupTimeout]);
   
-  // ТОЛЬКО ПОСЛЕ ВСЕХ ХУКОВ - условные проверки и возвраты
-  const MAX_VISIBLE_CATEGORIES = 5;
+  // ========== УСЛОВНЫЕ ПРОВЕРКИ ПОСЛЕ ВСЕХ ХУКОВ ==========
+  
   const isShopPage = location.pathname.includes('/shop') || location.pathname.includes(createPageUrl('Shop'));
+  const MAX_VISIBLE = 5;
   
-  // Условный возврат - ПОСЛЕ всех хуков
-  if (isLoadingCategories || isShopPage || orderedCategories.length === 0) {
+  // Ранний возврат ТОЛЬКО после всех хуков
+  if (isLoading || isShopPage || !Array.isArray(orderedCategories) || orderedCategories.length === 0) {
     return null;
   }
   
-  // Остальная логика компонента
-  const visibleCategories = orderedCategories.slice(0, MAX_VISIBLE_CATEGORIES);
-  const hiddenCategories = orderedCategories.slice(MAX_VISIBLE_CATEGORIES);
-
+  const visibleCategories = orderedCategories.slice(0, MAX_VISIBLE);
+  const hiddenCategories = orderedCategories.slice(MAX_VISIBLE);
+  
+  // ========== РЕНДЕР ==========
+  
   return (
     <div className="bg-white border-b border-slate-200 shadow-sm sticky top-[76.8px] z-30 relative">
-      <div ref={menuContainerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Мобильная версия */}
         <div className="md:hidden">
           <Link
@@ -153,52 +118,47 @@ export default function CategoryMenuBar() {
         {/* Десктопная версия */}
         <nav className="hidden md:flex items-center w-full">
           {visibleCategories.map((category) => {
+            if (!category || !category.id) return null;
+            
             const subcategories = getSubcategories(category.id);
-            const hasSubcategories = subcategories.length > 0;
+            const hasSubs = Array.isArray(subcategories) && subcategories.length > 0;
+            const isHovered = hoveredCategory === category.id;
 
             return (
               <div
                 key={category.id}
-                ref={(el) => (categoryRefs.current[category.id] = el)}
                 className="relative flex-1"
                 onMouseEnter={() => {
                   cleanupTimeout();
-                  if (hoveredCategory !== category.id) {
-                    setHoveredCategory(category.id);
-                  }
+                  setHoveredCategory(category.id);
                 }}
-                onMouseLeave={handleCategoryMouseLeave}
+                onMouseLeave={handleMouseLeave}
               >
                 <Link
-                  to={`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name)}`}
-                  className="flex items-center justify-center gap-2 px-4 py-4 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors whitespace-nowrap relative w-full"
-                  onClick={() => handleCategoryClick(category.name)}
+                  to={`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name || '')}`}
+                  className="flex items-center justify-center gap-2 px-4 py-4 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors whitespace-nowrap"
+                  onClick={() => navigate(`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name || '')}`)}
                 >
-                  {category.name}
-                  {hasSubcategories && (
-                    <ChevronDown className="h-5 w-5 text-slate-500" />
-                  )}
+                  {category.name || 'Категория'}
+                  {hasSubs && <ChevronDown className="h-5 w-5 text-slate-500" />}
                 </Link>
               </div>
             );
           })}
           
-          {/* Блок "Еще" */}
+          {/* Кнопка "Еще" */}
           {hiddenCategories.length > 0 && (
             <div
-              ref={(el) => (categoryRefs.current['more'] = el)}
               className="relative flex-1"
               onMouseEnter={() => {
                 cleanupTimeout();
-                if (hoveredCategory !== 'more') {
-                  setHoveredCategory('more');
-                }
+                setHoveredCategory('more');
               }}
-              onMouseLeave={handleCategoryMouseLeave}
+              onMouseLeave={handleMouseLeave}
             >
               <Link
                 to={createPageUrl('Shop')}
-                className="flex items-center justify-center gap-2 px-4 py-4 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors whitespace-nowrap relative w-full"
+                className="flex items-center justify-center gap-2 px-4 py-4 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 transition-colors whitespace-nowrap"
                 onClick={() => navigate(createPageUrl('Shop'))}
               >
                 Еще
@@ -208,13 +168,14 @@ export default function CategoryMenuBar() {
           )}
         </nav>
 
-        {/* Выпадающее меню с подкатегориями */}
+        {/* Выпадающее меню для категорий */}
         <AnimatePresence>
           {hoveredCategory && hoveredCategory !== 'more' && (() => {
-            const category = visibleCategories.find(c => c.id === hoveredCategory);
+            const category = visibleCategories.find(c => c && c.id === hoveredCategory);
             if (!category) return null;
+            
             const subcategories = getSubcategories(category.id);
-            if (subcategories.length === 0) return null;
+            if (!Array.isArray(subcategories) || subcategories.length === 0) return null;
             
             return (
               <motion.div
@@ -226,23 +187,27 @@ export default function CategoryMenuBar() {
                 className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-4 z-[100]"
                 onMouseEnter={() => {
                   cleanupTimeout();
-                  if (hoveredCategory !== category.id) {
-                    setHoveredCategory(category.id);
-                  }
+                  setHoveredCategory(category.id);
                 }}
-                onMouseLeave={handleDropdownMouseLeave}
+                onMouseLeave={handleMouseLeave}
               >
                 <div className="grid grid-cols-3 gap-4">
-                  {subcategories.map((subcategory) => (
-                    <Link
-                      key={subcategory.id}
-                      to={`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(subcategory.name)}`}
-                      className="block px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-50 transition-colors rounded-lg"
-                      onClick={(e) => handleSubcategoryClick(e, subcategory.name, category.name)}
-                    >
-                      {subcategory.name}
-                    </Link>
-                  ))}
+                  {subcategories.map((sub) => {
+                    if (!sub || !sub.id) return null;
+                    return (
+                      <Link
+                        key={sub.id}
+                        to={`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name || '')}&subcategory=${encodeURIComponent(sub.name || '')}`}
+                        className="block px-4 py-3 text-base font-bold text-slate-900 hover:bg-slate-50 transition-colors rounded-lg"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate(`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name || '')}&subcategory=${encodeURIComponent(sub.name || '')}`);
+                        }}
+                      >
+                        {sub.name || 'Подкатегория'}
+                      </Link>
+                    );
+                  })}
                 </div>
               </motion.div>
             );
@@ -261,23 +226,24 @@ export default function CategoryMenuBar() {
               className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-4 z-50"
               onMouseEnter={() => {
                 cleanupTimeout();
-                if (hoveredCategory !== 'more') {
-                  setHoveredCategory('more');
-                }
+                setHoveredCategory('more');
               }}
-              onMouseLeave={handleDropdownMouseLeave}
+              onMouseLeave={handleMouseLeave}
             >
               <div className="grid grid-cols-3 gap-4">
-                {hiddenCategories.map((category) => (
-                  <Link
-                    key={category.id}
-                    to={`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name)}`}
-                    className="block px-4 py-3 text-base text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors rounded-lg"
-                    onClick={() => handleCategoryClick(category.name)}
-                  >
-                    {category.name}
-                  </Link>
-                ))}
+                {hiddenCategories.map((category) => {
+                  if (!category || !category.id) return null;
+                  return (
+                    <Link
+                      key={category.id}
+                      to={`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name || '')}`}
+                      className="block px-4 py-3 text-base text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors rounded-lg"
+                      onClick={() => navigate(`${createPageUrl('Shop')}?category=${encodeURIComponent(category.name || '')}`)}
+                    >
+                      {category.name || 'Категория'}
+                    </Link>
+                  );
+                })}
               </div>
             </motion.div>
           )}

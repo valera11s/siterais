@@ -53,8 +53,9 @@ const ProductCard = forwardRef(function ProductCard({ product, onAddToCart }, re
       ref={ref}
       whileHover={{ y: -8 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
+      className="h-full"
     >
-      <Card className="group overflow-hidden border-0 bg-white shadow-sm hover:shadow-xl transition-all duration-500 rounded-2xl">
+      <Card className="group overflow-hidden border-0 bg-white shadow-sm hover:shadow-xl transition-all duration-500 rounded-2xl h-full flex flex-col">
         <Link to={createProductUrl(product)} onClick={handleProductClick}>
           <div className="relative aspect-square bg-gradient-to-br from-slate-50 to-slate-100 p-8 overflow-hidden">
             {/* Бейджи для скидки, популярности и акционности */}
@@ -93,7 +94,7 @@ const ProductCard = forwardRef(function ProductCard({ product, onAddToCart }, re
           </div>
         </Link>
         
-        <div className="p-5 space-y-3">
+        <div className="p-5 space-y-3 flex-1 flex flex-col">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">
@@ -122,7 +123,7 @@ const ProductCard = forwardRef(function ProductCard({ product, onAddToCart }, re
           </div>
           
           <Link to={createProductUrl(product)} onClick={handleProductClick}>
-            <h3 className="font-semibold text-slate-800 line-clamp-2 group-hover:text-slate-600 transition-colors">
+            <h3 className="font-semibold text-slate-800 line-clamp-2 group-hover:text-slate-600 transition-colors min-h-[3rem]">
               {product.category_product_name_prefix 
                 ? `${product.category_product_name_prefix} ${product.name}`
                 : product.name}
@@ -131,7 +132,7 @@ const ProductCard = forwardRef(function ProductCard({ product, onAddToCart }, re
           
           <p className="text-xs text-slate-500 mt-1">Артикул: {product.id}</p>
           
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex items-center justify-between pt-2 mt-auto">
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-bold text-slate-900">
                 {formatPrice(product.price)} ₽

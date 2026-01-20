@@ -17,6 +17,14 @@ export default function CategoryMenuBar() {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Используем стабильную ссылку на функцию очистки
+  const cleanupTimeout = React.useCallback(() => {
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current);
+      leaveTimeoutRef.current = null;
+    }
+  }, []);
+  
   // Количество категорий для отображения (остальные в "Еще")
   const MAX_VISIBLE_CATEGORIES = 5;
   
@@ -101,14 +109,12 @@ export default function CategoryMenuBar() {
   };
 
   // Обработчик ухода мыши с выпадающего меню
-  const handleDropdownMouseLeave = () => {
-    if (leaveTimeoutRef.current) {
-      clearTimeout(leaveTimeoutRef.current);
-    }
+  const handleDropdownMouseLeave = React.useCallback(() => {
+    cleanupTimeout();
     leaveTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null);
     }, 150);
-  };
+  }, [cleanupTimeout]);
 
   // Обработчик клика на категорию
   const handleCategoryClick = (categoryName) => {
@@ -123,21 +129,9 @@ export default function CategoryMenuBar() {
   };
 
   // Очистка таймаута при размонтировании
-  // Используем useRef для хранения функции очистки, чтобы избежать лишних эффектов
-  const cleanupRef = useRef(null);
-  
   useEffect(() => {
-    // Сохраняем функцию очистки в ref
-    cleanupRef.current = () => {
-      if (leaveTimeoutRef.current) {
-        clearTimeout(leaveTimeoutRef.current);
-        leaveTimeoutRef.current = null;
-      }
-    };
-    
-    // Возвращаем функцию очистки
-    return cleanupRef.current;
-  }, []);
+    return cleanupTimeout;
+  }, [cleanupTimeout]);
 
   return (
     <div className="bg-white border-b border-slate-200 shadow-sm sticky top-[76.8px] z-30 relative">
@@ -200,10 +194,7 @@ export default function CategoryMenuBar() {
               className="relative flex-1"
               onMouseEnter={(e) => {
                 // Отменяем таймаут закрытия, если он был
-                if (leaveTimeoutRef.current) {
-                  clearTimeout(leaveTimeoutRef.current);
-                  leaveTimeoutRef.current = null;
-                }
+                cleanupTimeout();
                 // Устанавливаем hoveredCategory только если он изменился
                 if (hoveredCategory !== 'more') {
                   setHoveredCategory('more');
@@ -283,10 +274,7 @@ export default function CategoryMenuBar() {
               className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg p-4 z-50"
               onMouseEnter={() => {
                 // Отменяем таймаут закрытия
-                if (leaveTimeoutRef.current) {
-                  clearTimeout(leaveTimeoutRef.current);
-                  leaveTimeoutRef.current = null;
-                }
+                cleanupTimeout();
                 // Не устанавливаем hoveredCategory, если он уже установлен - избегаем лишних обновлений
                 if (hoveredCategory !== 'more') {
                   setHoveredCategory('more');

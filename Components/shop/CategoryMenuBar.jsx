@@ -60,10 +60,18 @@ export default function CategoryMenuBar() {
     },
   });
   
-  // Стабилизируем данные через useMemo с глубоким сравнением
-  const allCategoriesData = React.useMemo(() => {
-    return allCategoriesDataRaw;
-  }, [JSON.stringify(allCategoriesDataRaw)]);
+  // Стабилизируем данные через useRef, чтобы избежать лишних ре-рендеров
+  const allCategoriesDataRef = useRef([]);
+  const prevDataLengthRef = useRef(0);
+  
+  // Обновляем ref только если данные действительно изменились
+  if (allCategoriesDataRaw.length !== prevDataLengthRef.current || 
+      (allCategoriesDataRaw.length > 0 && allCategoriesDataRef.current.length === 0)) {
+    allCategoriesDataRef.current = allCategoriesDataRaw;
+    prevDataLengthRef.current = allCategoriesDataRaw.length;
+  }
+  
+  const allCategoriesData = allCategoriesDataRef.current;
 
   // Фильтруем основные категории (level 0) из всех категорий
   // Используем стабильную ссылку на массив, чтобы избежать лишних пересчетов

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, startTransition } from 'react';
 import { apiClient } from '../src/api/apiClient.js';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
@@ -116,14 +116,17 @@ export default function Shop() {
             filtersRestoredRef.current = false;
             
             // Восстанавливаем фильтры (поддерживаем как старый формат 'all', так и новый массив)
-            setSelectedCategory(Array.isArray(filters.category) ? filters.category : (filters.category === 'all' ? [] : (filters.category ? [filters.category] : [])));
-            setSelectedSubcategory(Array.isArray(filters.subcategory) ? filters.subcategory : (filters.subcategory === 'all' ? [] : (filters.subcategory ? [filters.subcategory] : [])));
-            setSelectedSubSubcategory(Array.isArray(filters.subSubcategory) ? filters.subSubcategory : (filters.subSubcategory === 'all' ? [] : (filters.subSubcategory ? [filters.subSubcategory] : [])));
-            setSelectedBrand(Array.isArray(filters.brand) ? filters.brand : (filters.brand === 'all' ? [] : (filters.brand ? [filters.brand] : [])));
-            setSelectedCondition(filters.condition || 'all');
-            setPriceMin(filters.priceMin || '');
-            setPriceMax(filters.priceMax || '');
-            setSearchQuery(filters.searchQuery || '');
+            // Используем startTransition для всех обновлений состояний
+            startTransition(() => {
+              setSelectedCategory(Array.isArray(filters.category) ? filters.category : (filters.category === 'all' ? [] : (filters.category ? [filters.category] : [])));
+              setSelectedSubcategory(Array.isArray(filters.subcategory) ? filters.subcategory : (filters.subcategory === 'all' ? [] : (filters.subcategory ? [filters.subcategory] : [])));
+              setSelectedSubSubcategory(Array.isArray(filters.subSubcategory) ? filters.subSubcategory : (filters.subSubcategory === 'all' ? [] : (filters.subSubcategory ? [filters.subSubcategory] : [])));
+              setSelectedBrand(Array.isArray(filters.brand) ? filters.brand : (filters.brand === 'all' ? [] : (filters.brand ? [filters.brand] : [])));
+              setSelectedCondition(filters.condition || 'all');
+              setPriceMin(filters.priceMin || '');
+              setPriceMax(filters.priceMax || '');
+              setSearchQuery(filters.searchQuery || '');
+            });
             
             // Разрешаем сохранение после небольшой задержки
             setTimeout(() => {
@@ -163,19 +166,22 @@ export default function Shop() {
               .then(category => {
                 if (category && category.name) {
                   filtersRestoredRef.current = false;
-                  setSelectedCategory([category.name]);
-                  // Если есть подкатегория в URL, устанавливаем её
-                  if (subcategoryParam) {
-                    setSelectedSubcategory([subcategoryParam]);
-                  } else {
-                    setSelectedSubcategory([]);
-                  }
-                  setSelectedSubSubcategory([]);
-                  setSelectedBrand([]);
-                  setSelectedCondition('all');
-                  setPriceMin('');
-                  setPriceMax('');
-                  setSearchQuery('');
+                  // Используем startTransition для всех обновлений состояний
+                  startTransition(() => {
+                    setSelectedCategory([category.name]);
+                    // Если есть подкатегория в URL, устанавливаем её
+                    if (subcategoryParam) {
+                      setSelectedSubcategory([subcategoryParam]);
+                    } else {
+                      setSelectedSubcategory([]);
+                    }
+                    setSelectedSubSubcategory([]);
+                    setSelectedBrand([]);
+                    setSelectedCondition('all');
+                    setPriceMin('');
+                    setPriceMax('');
+                    setSearchQuery('');
+                  });
                   // НЕ используем window.history.replaceState, чтобы не вызывать циклы
                   // Просто помечаем URL как обработанный
                   urlParamsProcessedRef.current = `${location.pathname}`;
@@ -199,19 +205,22 @@ export default function Shop() {
           } else {
             // Если это название - используем напрямую
             filtersRestoredRef.current = false;
-            setSelectedCategory([categoryParam]);
-            // Если есть подкатегория в URL, устанавливаем её
-            if (subcategoryParam) {
-              setSelectedSubcategory([subcategoryParam]);
-            } else {
-              setSelectedSubcategory([]);
-            }
-            setSelectedSubSubcategory([]);
-            setSelectedBrand([]);
-            setSelectedCondition('all');
-            setPriceMin('');
-            setPriceMax('');
-            setSearchQuery('');
+            // Используем startTransition для всех обновлений состояний
+            startTransition(() => {
+              setSelectedCategory([categoryParam]);
+              // Если есть подкатегория в URL, устанавливаем её
+              if (subcategoryParam) {
+                setSelectedSubcategory([subcategoryParam]);
+              } else {
+                setSelectedSubcategory([]);
+              }
+              setSelectedSubSubcategory([]);
+              setSelectedBrand([]);
+              setSelectedCondition('all');
+              setPriceMin('');
+              setPriceMax('');
+              setSearchQuery('');
+            });
             // Очищаем URL параметры, чтобы избежать повторной обработки
             // НЕ используем window.history.replaceState здесь, чтобы не вызывать циклы
             urlParamsProcessedRef.current = `${location.pathname}`; // Обновляем ключ без search
@@ -241,14 +250,17 @@ export default function Shop() {
             const savedFilters = sessionStorage.getItem('shop_filters');
             if (savedFilters) {
               filtersRestoredRef.current = false;
-              setSelectedCategory([]);
-              setSelectedSubcategory([]);
-              setSelectedSubSubcategory([]);
-              setSelectedBrand([]);
-              setSelectedCondition('all');
-              setPriceMin('');
-              setPriceMax('');
-              setSearchQuery('');
+              // Используем startTransition для всех обновлений состояний
+              startTransition(() => {
+                setSelectedCategory([]);
+                setSelectedSubcategory([]);
+                setSelectedSubSubcategory([]);
+                setSelectedBrand([]);
+                setSelectedCondition('all');
+                setPriceMin('');
+                setPriceMax('');
+                setSearchQuery('');
+              });
               sessionStorage.removeItem('shop_filters');
               setTimeout(() => {
                 filtersRestoredRef.current = true;

@@ -494,12 +494,12 @@ export default function Shop() {
       if (selectedRating !== null && selectedRating !== undefined) {
         const productRating = parseFloat(p.rating) || 0;
         
-        // "Менее 3 звезд" - рейтинг от 0 до 2.99
-        if (selectedRating === 'less_than_3') {
-          return productRating >= 0 && productRating < 3.00;
+        // "1-3 звезды" - рейтинг от 1.00 до 3.99 (1, 2 или 3 звезды)
+        if (selectedRating === '1-3') {
+          return productRating >= 1.00 && productRating < 4.00;
         }
         
-        // Точное значение для 3, 4, 5 звезд
+        // Точное значение для 4, 5 звезд
         if (typeof selectedRating === 'number') {
           return Math.abs(productRating - selectedRating) < 0.01;
         }

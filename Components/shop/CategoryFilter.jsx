@@ -117,8 +117,7 @@ export default function CategoryFilter({
     { value: null, label: 'Все' },
     { value: 5, label: '5 звезд' },
     { value: 4, label: '4 звезды' },
-    { value: 3, label: '3 звезды' },
-    { value: 'less', label: 'Менее' },
+    { value: '1-3', label: '1-3 звезды' },
   ];
 
   return (
@@ -143,7 +142,7 @@ export default function CategoryFilter({
                       : 'bg-white hover:bg-slate-50 border-slate-200'
                   }`}
                 >
-                  {option.value !== null && option.value !== 'less' && (
+                  {option.value !== null && typeof option.value === 'number' && (
                     <div className="flex items-center gap-1 mr-1">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
@@ -153,6 +152,22 @@ export default function CategoryFilter({
                               ? 'fill-amber-400 text-amber-400' 
                               : 'text-slate-300'
                           }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {option.value === '1-3' && (
+                    <div className="flex items-center gap-1 mr-1">
+                      {[1, 2, 3].map((star) => (
+                        <Star
+                          key={star}
+                          className="w-3 h-3 fill-amber-400 text-amber-400"
+                        />
+                      ))}
+                      {[4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className="w-3 h-3 text-slate-300"
                         />
                       ))}
                     </div>

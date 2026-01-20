@@ -170,12 +170,35 @@ function printStats() {
   console.log('\n' + '='.repeat(70));
   
   // Оценка производительности
-  if (stats.success / stats.total >= 0.95 && timeStats && timeStats.avg < 500) {
-    console.log('✅ Сервер отлично справляется с нагрузкой!');
-  } else if (stats.success / stats.total >= 0.8 && timeStats && timeStats.avg < 1000) {
-    console.log('⚠️  Сервер справляется, но есть задержки');
+  if (stats.total === 0) {
+    console.log('⚠️  Нет данных для анализа');
   } else {
-    console.log('❌ Сервер испытывает проблемы с нагрузкой');
+    const successRate = stats.success / stats.total;
+    const hasGoodLatency = timeStats && timeStats.avg < 500;
+    const hasAcceptableLatency = timeStats && timeStats.avg < 1000;
+    
+    if (successRate >= 0.95 && hasGoodLatency) {
+      console.log('✅ Сервер отлично справляется с нагрузкой!');
+      console.log(`   Рекомендуется: можно увеличить нагрузку до ${Math.round(REQUESTS_PER_SECOND * 1.5)} RPS`);
+    } else if (successRate >= 0.8 && hasAcceptableLatency) {
+      console.log('⚠️  Сервер справляется, но есть задержки');
+      console.log(`   Рекомендуется: текущая нагрузка близка к максимуму`);
+    } else {
+      console.log('❌ Сервер испытывает проблемы с нагрузкой');
+      console.log(`   Рекомендуется: уменьшить нагрузку до ${Math.round(REQUESTS_PER_SECOND * 0.7)} RPS`);
+    }
+    
+    // Оценка для планируемого апгрейда (2 CPU, 2 GB RAM)
+    console.log('\n📊 ПРОГНОЗ ПРОИЗВОДИТЕЛЬНОСТИ:');
+    console.log(`   Текущая конфигурация (1 CPU, 1 GB RAM):`);
+    console.log(`   - Стабильная нагрузка: ~${Math.round(actualRPS * 0.8)} RPS`);
+    console.log(`   - Пиковая нагрузка: ~${actualRPS} RPS`);
+    console.log(`\n   Планируемая конфигурация (2 CPU, 2 GB RAM):`);
+    const estimatedStable = Math.round(actualRPS * 0.8 * 2.5); // ~2.5x улучшение
+    const estimatedPeak = Math.round(actualRPS * 2.5);
+    console.log(`   - Стабильная нагрузка: ~${estimatedStable} RPS`);
+    console.log(`   - Пиковая нагрузка: ~${estimatedPeak} RPS`);
+    console.log(`   - Улучшение производительности: ~2.5x`);
   }
   console.log('='.repeat(70) + '\n');
 }

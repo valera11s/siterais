@@ -207,7 +207,23 @@ router.get('/', async (req, res) => {
       query += ` AND p.featured = true`;
     }
 
-    query += ' ORDER BY p.created_at DESC';
+    // Определяем, есть ли фильтры по категориям
+    const hasCategoryFilters = category || subcategory || subsubcategory;
+
+    // Если нет фильтров по категориям - сортируем по приоритету категорий
+    if (!hasCategoryFilters && !search) {
+      query += ` ORDER BY 
+        CASE 
+          WHEN c1.name = 'Видеокамеры' THEN 1
+          WHEN c1.name = 'Фотоаппараты' THEN 2
+          WHEN c1.name = 'Экшен-камеры' THEN 3
+          ELSE 4
+        END,
+        p.created_at DESC`;
+    } else {
+      // Если есть фильтры - используем стандартную сортировку
+      query += ' ORDER BY p.created_at DESC';
+    }
 
     const result = await pool.query(query, params);
     res.json(result.rows);

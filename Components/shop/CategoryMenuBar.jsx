@@ -62,14 +62,15 @@ export default function CategoryMenuBar() {
   
   // Стабилизируем данные через useRef, чтобы избежать лишних ре-рендеров
   const allCategoriesDataRef = useRef([]);
-  const prevDataLengthRef = useRef(0);
   
   // Обновляем ref только если данные действительно изменились
-  if (allCategoriesDataRaw.length !== prevDataLengthRef.current || 
-      (allCategoriesDataRaw.length > 0 && allCategoriesDataRef.current.length === 0)) {
-    allCategoriesDataRef.current = allCategoriesDataRaw;
-    prevDataLengthRef.current = allCategoriesDataRaw.length;
-  }
+  React.useEffect(() => {
+    // Сравниваем по длине и первому элементу для простоты
+    if (allCategoriesDataRaw.length !== allCategoriesDataRef.current.length ||
+        (allCategoriesDataRaw.length > 0 && allCategoriesDataRaw[0]?.id !== allCategoriesDataRef.current[0]?.id)) {
+      allCategoriesDataRef.current = allCategoriesDataRaw;
+    }
+  }, [allCategoriesDataRaw]);
   
   const allCategoriesData = allCategoriesDataRef.current;
 
